@@ -1,0 +1,263 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{Estratégias de Atualização e Prometheus}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Comparar estratégias de atualização
+    \item Implantar software com lançamentos canário (\textit{canary releases})
+    \item Usar o Prometheus para consultas personalizadas
+\end{itemize}
+
+No capítulo anterior, realizamos atualizações automatizadas com um pipeline de implantação. A atualização simplesmente funcionou, mas não fazemos ideia de como ela realmente ocorreu, a não ser pelo fato de que um \textit{pod} foi alterado. Vamos agora analisar como podemos tornar o processo de atualização mais seguro, ajudando-nos a alcançar um número maior de "noves" (\textit{nines}) na disponibilidade.
+
+Existem múltiplas estratégias de atualização/implantação/lançamento. Vamos nos concentrar em duas delas:
+\begin{itemize}
+    \item Atualização contínua (\textit{Rolling update})
+    \item Lançamento canário (\textit{Canary release})
+\end{itemize}
+
+Ambas as estratégias de atualização são projetadas para garantir que a aplicação continue funcionando durante e após uma atualização. Em vez de atualizar todos os \textit{pods} ao mesmo tempo, a ideia é atualizá-los um de cada vez e confirmar se a aplicação está funcionando.
+
+\section*{\color{primary}Atualização contínua (\textit{Rolling update})}
+
+Por padrão, o Kubernetes inicia uma atualização contínua (\textit{rolling update}) quando alteramos a imagem. Isso significa que cada \textit{pod} é atualizado sequencialmente. A atualização contínua é um excelente padrão, pois permite que a aplicação permaneça disponível durante o processo de atualização. Se decidirmos enviar uma imagem que não funciona, a atualização será interrompida automaticamente.
+
+Preparei uma aplicação e imagens com 5 versões.
+\begin{itemize}
+    \item A versão com a tag v1 sempre funciona
+    \item v2 nunca funciona
+    \item v3 funciona 90\% das vezes
+    \item v4 morrerá após 60 segundos, e
+    \item v5 sempre funciona
+\end{itemize}
+
+A seguinte configuração pode ser usada para colocar a aplicação v1 em funcionamento:
+
+\begin{lstlisting}[language=bash]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaky-update-dep
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: flaky-update
+  template:
+    metadata:
+      labels:
+        app: flaky-update
+    spec:
+      containers:
+        - name: flaky-update
+          image: mluukkai/dwk-app8:v1
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaky-update-svc
+spec:
+  selector:
+    app: flaky-update
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3541
+  type: LoadBalancer
+\end{lstlisting}
+
+Vamos implantar a aplicação:
+
+\begin{lstlisting}[language=bash]
+$ kubectl apply -f deployment.yaml
+  deployment.apps/flaky-update-dep created
+
+$ kubectl get po
+  NAME                                READY   STATUS    RESTARTS   AGE
+  flaky-update-dep-7b5fd9ffc7-27cxt   1/1     Running   0          87s
+  flaky-update-dep-7b5fd9ffc7-mp8vd   1/1     Running   0          88s
+  flaky-update-dep-7b5fd9ffc7-m4smm   1/1     Running   0          87s
+  flaky-update-dep-7b5fd9ffc7-nzl98   1/1     Running   0          88s
+\end{lstlisting}
+
+Como podemos ver, a aplicação está funcionando. Agora mude a tag para v2 e aplique.
+
+\begin{lstlisting}[language=bash]
+$ kubectl apply -f deployment.yaml
+$ kubectl get po --watch 
+  NAME                                READY   STATUS    RESTARTS   AGE
+  flaky-update-dep-84f4c94bc7-dkqcw   1/1     Running   0          17s
+  flaky-update-dep-84f4c94bc7-h7d2t   1/1     Running   0          9s
+\end{lstlisting}
+
+Você pode ver que a atualização contínua foi concluída, mas infelizmente, a aplicação não funciona mais. A aplicação está em execução, apenas existe um bug que a impede de funcionar corretamente. Como comunicamos esse mau funcionamento fora da aplicação? É aqui que entram as \textit{ReadinessProbes}.
+
+Com uma \textit{ReadinessProbe}, o Kubernetes pode verificar se um \textit{pod} está pronto para processar requisições. A aplicação possui um \textit{endpoint} \texttt{/healthz} na porta 3541, e podemos usá-lo para testar a integridade. Ele simplesmente responderá com o código de status 500 se não estiver funcionando e 200 se estiver.
+
+Vamos reverter a versão para a v1 também, para que possamos testar a atualização para a v2 novamente.
+
+\begin{lstlisting}[language=bash]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaky-update-dep
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: flaky-update
+  template:
+    metadata:
+      labels:
+        app: flaky-update
+    spec:
+      containers:
+        - name: flaky-update
+          image: mluukkai/dwk-app8:v1
+          readinessProbe:
+            initialDelaySeconds: 10 # Atraso inicial ate que a prontidao seja testada
+            periodSeconds: 5 # Com que frequencia testar
+            httpGet:
+               path: /healthz
+               port: 3541
+\end{lstlisting}
+
+Aqui, o \texttt{initialDelaySeconds} e o \texttt{periodSeconds} significam que a sonda é enviada 10 segundos depois que o contêiner estiver ativo e a cada 5 segundos depois disso. Agora, se alterarmos a tag para v2 e aplicarmos, três dos \textit{pods} estarão completamente funcionais. Um dos \textit{pods} v1 foi removido para dar lugar aos v2, mas como eles não funcionam, nunca ficam com status \textit{READY}, e a atualização não pode continuar.
+
+\subsection*{\color{secondary}Continuando o curso com k3d}
+Você pode continuar usando o Google Kubernetes Engine ou voltar a usar o k3d. Como nossas aplicações agora usam a Gateway API, você deve habilitá-la no cluster k3d.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.1: Readiness probe]
+Crie uma \textit{ReadinessProbe} para a aplicação Ping-pong. Ela deve estar pronta quando tiver uma conexão com o banco de dados. E crie outra \textit{ReadinessProbe} para a aplicação \textit{Log output}. Ela deve estar pronta quando puder receber dados da aplicação Ping-pong.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.2: O projeto, passo 21]
+Crie as sondas (\textit{probes}) e o \textit{endpoint} necessários para O Projeto para garantir que ele esteja funcionando e conectado a um banco de dados. Adicione um botão à sua aplicação que pode ser usado para "quebrar" a aplicação.
+\end{tcolorbox}
+
+\begin{lstlisting}[language=bash]
+let isHealthy = true
+// ...
+app.get("/healthz", (req, res) => {
+  if (!isHealthy) {
+    return res.status(500).json({ status: "unhealthy" })
+  }
+  return res.status(200).json({ status: "ok" })
+})
+\end{lstlisting}
+
+\section*{\color{primary}Lançamento canário (\textit{Canary release})}
+
+Com atualizações contínuas, ao incluir as Sondas (\textit{Probes}), poderíamos criar lançamentos sem tempo de inatividade para os usuários. Às vezes isso não é o suficiente e você precisa ser capaz de fazer um \textit{lançamento parcial} para alguns usuários e obter dados de uso e estatísticas para o próximo lançamento. \textit{Lançamento canário} é o termo usado para descrever uma estratégia de lançamento em que introduzimos um subconjunto dos usuários a uma nova versão da aplicação. Quando a confiança no novo lançamento aumenta, o número de usuários na nova versão pode ser aumentado até que a versão antiga não seja mais usada.
+
+Usaremos o Argo Rollouts para testar um tipo de lançamento canário:
+
+\begin{lstlisting}[language=bash]
+$ kubectl create namespace argo-rollouts
+$ kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+\end{lstlisting}
+
+O \textit{Rollout} substituirá nosso \textit{deployment} criado anteriormente e nos permitirá usar um novo campo:
+
+\begin{lstlisting}[language=bash]
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: flaky-update-dep
+spec:
+  replicas: 4
+  strategy:
+    canary:
+      steps:
+      - setWeight: 25
+      - pause:
+          duration: 30s
+      - setWeight: 50
+      - pause:
+          duration: 30s
+# ... Sondas omitidas por brevidade
+\end{lstlisting}
+
+A estratégia acima moverá primeiro 25\% (\textit{setWeight}) dos \textit{pods} para uma nova versão, após o que esperará por 30 segundos, moverá para 50\% dos \textit{pods} e depois aguardará por 30 segundos até que cada \textit{pod} seja atualizado.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.3: Prometheus]
+Inicie agora o Prometheus com Helm e use \textit{port-forward} para acessar o site GUI. Escreva uma consulta que mostre o número de \textit{pods} criados por StatefulSets no \textit{namespace} \texttt{prometheus}.
+\end{tcolorbox}
+
+Com o novo \textit{Rollout} e \textit{AnalysisTemplate}, podemos testar com segurança a implantação de qualquer versão. O \textit{AnalysisTemplate} usará o Prometheus para consultar o estado do \textit{deployment}.
+
+\begin{lstlisting}[language=bash]
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: restart-rate
+spec:
+  metrics:
+  - name: restart-rate
+    initialDelay: 2m
+    successCondition: result < 2
+    provider:
+      prometheus:
+        address: http://kube-prometheus-stack-1602-prometheus.prometheus.svc.cluster.local:9090 # Nome DNS para o meu Prometheus, encontre o seu com kubectl describe svc ...
+        query: |
+          scalar(
+            sum(kube_pod_container_status_restarts_total{namespace="default", container="flaky-update"}) -
+            sum(kube_pod_container_status_restarts_total{namespace="default", container="flaky-update"} offset 2m)
+          )
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.4: Seu canário]
+Crie um \textit{AnalysisTemplate} para a aplicação Ping-pong que acompanhará o uso de CPU de todos os contêineres no \textit{namespace}.
+\end{tcolorbox}
+
+\section*{\color{primary}Outras estratégias de implantação}
+O Kubernetes suporta a estratégia de Recriação (\textit{Recreate}), que derruba os \textit{pods} anteriores e substitui tudo pelo atualizado. O Argo Rollouts suporta a estratégia \textit{BlueGreen}, na qual uma nova versão é executada lado a lado com a nova, mas o tráfego é alternado entre as duas em um determinado ponto.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.5: O projeto, passo 22]
+Nossa aplicação de tarefas (\textit{todo}) poderia ter um campo "Concluído" (\textit{Done}) para tarefas que já foram feitas. Deve ser uma requisição PUT para \texttt{/todos/<id>}.
+\end{tcolorbox}
+
+\end{document}

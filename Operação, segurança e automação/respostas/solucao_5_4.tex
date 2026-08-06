@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.4 - Wikipedia com init e sidecar}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Criar Volume}: Crie um manifesto de Deployment com um volume do tipo \texttt{emptyDir} para compartilhar os dados entre os contêineres do Pod. Ele será montado em \texttt{/usr/share/nginx/html}.
+2. \textbf{Init Container}: Na secção \texttt{initContainers}, configure um contêiner baseado em \texttt{curlimages/curl}. O comando deverá ser: \texttt{sh -c "curl -L -o /usr/share/nginx/html/index.html https://en.wikipedia.org/wiki/Kubernetes"}.
+3. \textbf{Sidecar Container}: Na seção regular \texttt{containers}, crie um contêiner secundário usando \texttt{curlimages/curl}. Em vez de morrer, ele deve rodar um loop longo: \texttt{sh -c "while true; do sleep \$((RANDOM \% 600 + 300)); curl -L -o /usr/share/nginx/html/index.html https://en.wikipedia.org/wiki/Special:Random; done"}.
+4. \textbf{Main Container}: Crie o contêiner final usando \texttt{nginx:alpine} com o \texttt{volumeMounts} devidamente exposto, que apenas servirá os arquivos HTML alterados de maneira contínua.
+\end{tcolorbox}
+
+\end{document}

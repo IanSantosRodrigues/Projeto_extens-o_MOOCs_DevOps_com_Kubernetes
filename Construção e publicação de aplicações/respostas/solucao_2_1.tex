@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 2.1 - Services e comunicação interna}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\textbf{Guia de Solução:}
+
+\subsection*{\color{secondary}Passo a Passo}
+
+1. Crie um Deployment com label \texttt{app: web} e três réplicas.
+2. Crie um Service ClusterIP selecionando \texttt{app: web}.
+3. Use \texttt{kubectl run curl --rm -it --image=curlimages/curl -- sh} e acesse \texttt{http://web-svc}.
+4. Valide com \texttt{kubectl get endpoints web-svc} se o Service encontrou os Pods.
+
+\end{document}

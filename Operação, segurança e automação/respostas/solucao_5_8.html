@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 5.8 - O Panorama (Landscape)</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 5.8 - O Panorama (Landscape)</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Acessar o Mapa</strong>: Abra o CNCF Cloud Native Landscape (versão interativa ajuda a procurar itens via texto).</li>
+<li><strong>Circule os Usados</strong>: Salve a imagem/Screenshot do navegador. Num editor de imagens (Paint, Photoshop), pegue um círculo Vermelho e marque as ferramentas abordadas nas lições: <strong>Kubernetes, Helm, ArgoCD, Prometheus, Grafana, NATS, Istio, Knative</strong> e, caso os use profissionalmente, <strong>Docker, GitHub Actions</strong>, etc.</li>
+<li><strong>Circule as Dependências</strong>: Com um círculo Azul, marque itens base em que esses projetos rodam. Exemplo: Kubernetes depende de <strong>etcd</strong> para o Control Plane, <strong>containerd/CRI-O</strong> para execução de imagens e <strong>CoreDNS</strong> e <strong>Flannel/Calico</strong> para as camadas de rede.</li>
+<li><strong>Lista de Contexto</strong>: Num arquivo <code>.txt</code> simples (ou <code>.md</code>), relacione os itens, como: </li>
+<li><em>Istio</em>: Focado no curso para Service Mesh e divisões de tráfego de redes;</li>
+<li><em>containerd</em>: Uso indireto via Docker Desktop / k3s fora do curso para empacotar bibliotecas;</li>
+<li><em>CoreDNS</em>: Uso indireto no k3d gerenciando <code>svc.cluster.local</code>.</li>
+</ol>
+    </div>
+</body>
+</html>

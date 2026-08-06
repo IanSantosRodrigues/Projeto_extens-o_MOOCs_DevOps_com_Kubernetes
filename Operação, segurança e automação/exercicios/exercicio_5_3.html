@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício 5.3: Log app, a Edição Service Mesh</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .exercise-box { background-color: #e8f4f8; border-left: 5px solid #3498db; padding: 20px; border-radius: 4px; margin-top: 20px; }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Exercício 5.3: Log app, a Edição Service Mesh</h1>
+    <div class="exercise-box">
+        <p>Implemente a aplicação Log output na malha de serviço (<em>service mesh</em>). <br>- Estenda a aplicação desenvolvendo um novo serviço chamado <em>greeter</em>, capaz de responder a uma requisição HTTP GET com uma saudação ('Hello').<br>- A aplicação <em>log output</em> deve passar a consumir o serviço <em>greeter</em> via rede e exibir a saudação na tela juntamente com as saídas dos logs regulares.<br>- Implante duas versões diferentes do <em>greeter</em> (v1 e v2) e configure as regras de roteamento do Istio (como o <em>HTTPRoute</em>) para dividir o tráfego: uma versão deve receber 75% das requisições e a outra os 25% restantes.</p>
+    </div>
+</body>
+</html>

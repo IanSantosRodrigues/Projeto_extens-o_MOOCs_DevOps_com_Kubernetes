@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Comunicação entre Pods e Services</title><style>body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:900px;margin:40px auto;padding:20px;background:#faf8f5}h1,h2,h3{color:#2c3e50}h1{border-bottom:3px solid #3498db;padding-bottom:10px}h2{border-bottom:1px solid #bdc3c7;padding-bottom:5px;margin-top:30px}pre{background:#2c3e50;color:#ecf0f1;padding:15px;border-radius:8px;overflow-x:auto;font-size:14px}code{font-family:'Courier New',Courier,monospace}p code,li code{background:#e8e8e8;color:#c0392b;padding:2px 4px;border-radius:4px}blockquote{border-left:4px solid #3498db;margin:16px 0;padding:8px 16px;background:#eef6fb}</style></head><body>
+<h1>Comunicação entre Pods e Services</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Explicar como os Pods se comunicam dentro do cluster</li>
+<li>Criar Services para estabilizar acesso a aplicações</li>
+<li>Diferenciar ClusterIP, NodePort, LoadBalancer e ExternalName</li>
+</ul>
+<p>Quando trabalhamos apenas com um <code>Deployment</code>, cada Pod criado recebe seu próprio endereço IP. Esse IP, porém, não deve ser usado como contrato de comunicação: Pods são substituídos, recriados e movidos entre nós. A solução do Kubernetes para esse problema é o <code>Service</code>, um recurso que oferece um ponto de acesso estável para um conjunto de Pods selecionados por <code>labels</code>.</p>
+<p>O <code>Service</code> separa quem consome a aplicação de onde os Pods estão rodando naquele momento. Em vez de chamar diretamente o IP de um Pod, outro componente chama o nome DNS do Service, como <code>backend-svc.default.svc.cluster.local</code>. O Kubernetes mantém os <code>Endpoints</code> atualizados conforme os Pods entram ou saem do conjunto selecionado.</p>
+<h2>Labels, selectors e Endpoints</h2>
+<p>Um Service encontra seus Pods por meio de seletores. Por isso, labels bem definidas deixam de ser detalhe estético e viram parte da arquitetura da aplicação. Se o seletor do Service não combinar com os labels do Pod, o Service existirá, mas não encaminhará tráfego para lugar nenhum.</p>
+<pre><code class="language-yaml">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-dep
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-svc
+spec:
+  selector:
+    app: app
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+</code></pre>
+<p>Depois de aplicar o manifesto, os comandos <code>kubectl get svc</code>, <code>kubectl get endpoints app-svc</code> e <code>kubectl describe svc app-svc</code> ajudam a verificar se o Service realmente encontrou os Pods.</p>
+<h2>Tipos de Service</h2>
+<p>O tipo <code>ClusterIP</code> é o padrão e expõe a aplicação apenas dentro do cluster. Ele é ideal para comunicação interna entre microsserviços. O <code>NodePort</code> abre uma porta em todos os nós do cluster e encaminha o tráfego para o Service. O <code>LoadBalancer</code> solicita ao provedor de nuvem um balanceador externo. O <code>ExternalName</code> cria um alias DNS para um serviço externo.</p>
+<h2>Headless Service</h2>
+<p>Um Headless Service é criado com <code>clusterIP: None</code>. Nesse caso, o Kubernetes não fornece um IP virtual único para balanceamento. Em vez disso, o DNS retorna os endereços dos Pods diretamente. Esse padrão é importante para aplicações que precisam conhecer a identidade individual de cada réplica, como bancos de dados e sistemas distribuídos.</p>
+<pre><code class="language-yaml">
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+</code></pre>
+<h2>Boas práticas</h2>
+<p>Use nomes claros, mantenha labels consistentes e evite depender de IPs de Pods. Para comunicação interna, comece com <code>ClusterIP</code>. Para publicação externa, prefira Ingress, Gateway API ou um LoadBalancer controlado. Sempre valide se os Endpoints aparecem.</p>
+</body></html>

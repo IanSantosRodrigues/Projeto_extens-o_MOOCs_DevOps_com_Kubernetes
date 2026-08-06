@@ -1,0 +1,38 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.8 - O Panorama (Landscape)}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Acessar o Mapa}: Abra o CNCF Cloud Native Landscape (versão interativa ajuda a procurar itens via texto).
+2. \textbf{Circule os Usados}: Salve a imagem/Screenshot do navegador. Num editor de imagens (Paint, Photoshop), pegue um círculo Vermelho e marque as ferramentas abordadas nas lições: \textbf{Kubernetes, Helm, ArgoCD, Prometheus, Grafana, NATS, Istio, Knative} e, caso os use profissionalmente, \textbf{Docker, GitHub Actions}, etc.
+3. \textbf{Circule as Dependências}: Com um círculo Azul, marque itens base em que esses projetos rodam. Exemplo: Kubernetes depende de \textbf{etcd} para o Control Plane, \textbf{containerd/CRI-O} para execução de imagens e \textbf{CoreDNS} e \textbf{Flannel/Calico} para as camadas de rede.
+4. \textbf{Lista de Contexto}: Num arquivo \texttt{.txt} simples (ou \texttt{.md}), relacione os itens, como: 
+   - \textit{Istio}: Focado no curso para Service Mesh e divisões de tráfego de redes;
+   - \textit{containerd}: Uso indireto via Docker Desktop / k3s fora do curso para empacotar bibliotecas;
+   - \textit{CoreDNS}: Uso indireto no k3d gerenciando \texttt{svc.cluster.local}.
+\end{tcolorbox}
+
+\end{document}

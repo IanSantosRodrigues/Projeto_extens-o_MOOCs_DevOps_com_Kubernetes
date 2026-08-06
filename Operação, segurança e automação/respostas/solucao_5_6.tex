@@ -1,0 +1,37 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.6 - Testando Serverless}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Cluster k3d Personalizado}: Remova o traefik padrão durante a criação do cluster com a \textit{flag} apropriada: \texttt{k3d cluster create --k3s-arg "--disable=traefik@server:0"}.
+2. \textbf{Instalação do Knative Serving}: Aplique os manifestos do Core do Knative e CRDs. 
+3. \textbf{Camada de Rede (Kourier)}: Instale os manifestos de rede focados em Kourier e aplique um patch para que o Knative o defina como \textit{Ingress} padrão: \texttt{kubectl patch configmap/config-network --namespace knative-serving --type merge --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'}.
+4. \textbf{Magic DNS}: Aplique o Job de configuração para o \texttt{sslip.io}, permitindo que os domínios internos possuam rotas válidas para os testes de \textit{curl} locais.
+5. \textbf{Troubleshooting}: Inspecione o \texttt{webhook} ou \texttt{controller} com \texttt{kubectl logs -n knative-serving} caso fiquem em estado de falha (dependendo dos recursos da máquina, aguardar muitas vezes é a solução).
+6. \textbf{Testes Finais}: Crie um Knative \texttt{Service} genérico, acompanhe os pods nascendo a partir do zero a cada requisição (Scale to Zero) e explore como fazer as transições de revisões via YAML.
+\end{tcolorbox}
+
+\end{document}

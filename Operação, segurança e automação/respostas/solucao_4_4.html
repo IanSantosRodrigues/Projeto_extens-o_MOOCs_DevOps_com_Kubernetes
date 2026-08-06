@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 4.4 - Seu canário</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 4.4 - Seu canário</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Definição do AnalysisTemplate</strong>: Crie um arquivo YAML com a estrutura de <code>AnalysisTemplate</code> fornecida pelo Argo Rollouts. Nomeie-o, por exemplo, como <code>cpu-usage-rate</code>.</li>
+<li><strong>Configuração da Métrica</strong>: Defina o provedor como <code>prometheus</code> e aponte para o endereço DNS do serviço Prometheus no cluster (ex: <code>http://prometheus-server.monitoring.svc.cluster.local:80</code>).</li>
+<li><strong>Query PromQL</strong>: No campo <code>query</code>, escreva a consulta de uso da CPU dos contêineres: <code>sum(rate(container_cpu_usage_seconds_total{namespace="default", pod=~"pingpong-.*"}[5m]))</code>.</li>
+<li><strong>Condição de Sucesso</strong>: Defina a condição de sucesso (<code>successCondition</code>) como <code>result &lt; 0.5</code> (ou um valor razoável para a sua aplicação).</li>
+<li><strong>Vinculação ao Rollout</strong>: No recurso de <code>Rollout</code> da aplicação Ping-pong, insira um passo de <code>analysis</code> logo após o primeiro <code>setWeight</code>, referenciando o <code>cpu-usage-rate</code>. Se o uso estourar o limite, o <em>rollback</em> será automático.</li>
+</ol>
+    </div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 5.2 - Primeiros passos com a malha de serviço Istio</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 5.2 - Primeiros passos com a malha de serviço Istio</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Instalação do CLI</strong>: Siga o guia de documentação e baixe os binários do Istio. Ex: <code>curl -L https://istio.io/downloadIstio | sh -</code> e inclua o executável no seu PATH.</li>
+<li><strong>Configurar k3d/Kubernetes</strong>: Execute <code>istioctl install --set profile=demo -y</code> no cluster para instalar a estrutura do <em>Control Plane</em> do Istio.</li>
+<li><strong>Injeção Automática</strong>: Rotule o <em>namespace</em> padrão para usar o proxy automático do Istio: <code>kubectl label namespace default istio-injection=enabled</code> (ou as configurações específicas para a versão Ambient, sem sidecars).</li>
+<li><strong>Deploy do Sample App</strong>: Faça o apply dos manifestos fornecidos pelo repositório do Istio (como o <em>Bookinfo application</em>).</li>
+<li><strong>Monitoramento e Limpeza</strong>: Exponha o <em>Kiali</em> via <code>istioctl dashboard kiali</code>. Visualize os nós se comunicando. Em seguida, limpe as instalações conforme instruído pela documentação.</li>
+</ol>
+    </div>
+</body>
+</html>

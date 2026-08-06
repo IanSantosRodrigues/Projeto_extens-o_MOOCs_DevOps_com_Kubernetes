@@ -1,0 +1,34 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 5.7: Faça o deploy para o serverless}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.7: Faça o deploy para o serverless]
+Modifique o serviço Ping-pong do seu aplicativo 'Log Output' para utilizar o modelo \textit{serverless} implantando-o como um Knative Service.
+
+- Utilize a nomenclatura de DNS do serviço totalmente qualificado (\textit{fully qualified name}, ex: \texttt{http://pingpong.exercises.svc.cluster.local}) para garantir que os demais componentes locais consigam se comunicar com ele na infraestrutura do Knative.
+
+- Defina o \texttt{hostname} nas regras do \texttt{URLRewrite} caso queira testar a exposição do endpoint \textit{pingpong} e torná-lo acessível no seu navegador.
+\end{tcolorbox}
+
+\end{document}

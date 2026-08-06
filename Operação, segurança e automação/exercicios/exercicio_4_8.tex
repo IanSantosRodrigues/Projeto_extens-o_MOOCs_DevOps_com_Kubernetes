@@ -1,0 +1,32 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.8: O Projeto, etapa 24}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.8: O Projeto, etapa 24]
+Mova a infraestrutura d'O Projeto (\textit{The Project}) para usar a abordagem GitOps com ArgoCD. 
+
+Dessa maneira, após cada novo commit no seu repositório, a aplicação deverá ser atualizada automaticamente no cluster sem a necessidade de comandos manuais (\texttt{kubectl apply}). Neste exercício, basta garantir que os commits realizados na \textit{branch main} (ramificação principal) façam o \textit{deploy} diretamente no cluster.
+\end{tcolorbox}
+
+\end{document}

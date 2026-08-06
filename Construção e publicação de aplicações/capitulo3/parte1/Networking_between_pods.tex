@@ -1,0 +1,98 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Comunicação entre Pods e Services}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+\item Explicar como os Pods se comunicam dentro do cluster
+\item Criar Services para estabilizar acesso a aplicações
+\item Diferenciar ClusterIP, NodePort, LoadBalancer e ExternalName
+\end{itemize}
+
+Quando trabalhamos apenas com um \texttt{Deployment}, cada Pod criado recebe seu próprio endereço IP. Esse IP, porém, não deve ser usado como contrato de comunicação: Pods são substituídos, recriados e movidos entre nós. A solução do Kubernetes para esse problema é o \texttt{Service}, um recurso que oferece um ponto de acesso estável para um conjunto de Pods selecionados por \texttt{labels}.
+
+O \texttt{Service} separa quem consome a aplicação de onde os Pods estão rodando naquele momento. Em vez de chamar diretamente o IP de um Pod, outro componente chama o nome DNS do Service, como \texttt{backend-svc.default.svc.cluster.local}. O Kubernetes mantém os \texttt{Endpoints} atualizados conforme os Pods entram ou saem do conjunto selecionado.
+
+\section*{\color{primary}Labels, selectors e Endpoints}
+
+Um Service encontra seus Pods por meio de seletores. Por isso, labels bem definidas deixam de ser detalhe estético e viram parte da arquitetura da aplicação. Se o seletor do Service não combinar com os labels do Pod, o Service existirá, mas não encaminhará tráfego para lugar nenhum.
+
+\begin{lstlisting}[language=bash]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-dep
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-svc
+spec:
+  selector:
+    app: app
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+\end{lstlisting}
+
+Depois de aplicar o manifesto, os comandos \texttt{kubectl get svc}, \texttt{kubectl get endpoints app-svc} e \texttt{kubectl describe svc app-svc} ajudam a verificar se o Service realmente encontrou os Pods.
+
+\section*{\color{primary}Tipos de Service}
+
+O tipo \texttt{ClusterIP} é o padrão e expõe a aplicação apenas dentro do cluster. Ele é ideal para comunicação interna entre microsserviços. O \texttt{NodePort} abre uma porta em todos os nós do cluster e encaminha o tráfego para o Service. O \texttt{LoadBalancer} solicita ao provedor de nuvem um balanceador externo. O \texttt{ExternalName} cria um alias DNS para um serviço externo.
+
+\section*{\color{primary}Headless Service}
+
+Um Headless Service é criado com \texttt{clusterIP: None}. Nesse caso, o Kubernetes não fornece um IP virtual único para balanceamento. Em vez disso, o DNS retorna os endereços dos Pods diretamente. Esse padrão é importante para aplicações que precisam conhecer a identidade individual de cada réplica, como bancos de dados e sistemas distribuídos.
+
+\begin{lstlisting}[language=bash]
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+\end{lstlisting}
+
+\section*{\color{primary}Boas práticas}
+
+Use nomes claros, mantenha labels consistentes e evite depender de IPs de Pods. Para comunicação interna, comece com \texttt{ClusterIP}. Para publicação externa, prefira Ingress, Gateway API ou um LoadBalancer controlado. Sempre valide se os Endpoints aparecem.
+
+\end{document}

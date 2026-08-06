@@ -1,0 +1,38 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 5.2: Primeiros passos com a malha de serviço Istio}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.2: Primeiros passos com a malha de serviço Istio]
+Aprofunde-se no ecossistema Service Mesh.
+
+- Leia a documentação oficial sobre os fundamentos do Istio.
+
+- Instale a ferramenta Istio CLI na sua máquina e configure o Istio no seu cluster k3d, lembrando-se das pré-condições.
+
+- Faça o \textit{deploy} da aplicação de exemplo oficial (Sample app) no \textit{namespace} para visualizar o fluxo de tráfego, e siga os passos do tutorial até a etapa de 'Clean up' (limpeza).
+
+- Certifique-se de que o Prometheus está instalado no cluster para coletar os dados do Kiali e do Istio.
+\end{tcolorbox}
+
+\end{document}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Pipeline de Implantação e Publicação</title><style>body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:900px;margin:40px auto;padding:20px;background:#faf8f5}h1,h2,h3{color:#2c3e50}h1{border-bottom:3px solid #3498db;padding-bottom:10px}h2{border-bottom:1px solid #bdc3c7;padding-bottom:5px;margin-top:30px}pre{background:#2c3e50;color:#ecf0f1;padding:15px;border-radius:8px;overflow-x:auto;font-size:14px}code{font-family:'Courier New',Courier,monospace}p code,li code{background:#e8e8e8;color:#c0392b;padding:2px 4px;border-radius:4px}blockquote{border-left:4px solid #3498db;margin:16px 0;padding:8px 16px;background:#eef6fb}</style></head><body>
+<h1>Pipeline de Implantação e Publicação</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Construir e publicar imagens de contêiner</li>
+<li>Automatizar deploy com pipeline</li>
+<li>Reduzir comandos manuais na entrega da aplicação</li>
+</ul>
+<p>Publicar uma aplicação manualmente funciona nas primeiras vezes, mas rapidamente vira fonte de erro. Um pipeline de implantação organiza o caminho entre alteração de código, construção da imagem, publicação no registry e atualização dos manifestos no cluster.</p>
+<h2>Fluxo básico</h2>
+<p>Um fluxo mínimo de publicação passa por quatro etapas: testar a aplicação, construir a imagem Docker, publicar a imagem em um registry e atualizar o cluster com a nova versão.</p>
+<pre><code class="language-bash">
+docker build -t registry.example.com/app:v1 .
+docker push registry.example.com/app:v1
+kubectl set image deployment/app-dep app=registry.example.com/app:v1
+</code></pre>
+<p>Esse exemplo é útil para entender o processo, mas em um projeto real preferimos registrar a versão no manifesto e aplicar de forma declarativa.</p>
+<h2>Tags de imagem</h2>
+<p>Usar <code>latest</code> parece conveniente, mas dificulta rastrear qual versão está em execução. Tags baseadas em commit, versão semântica ou número de build tornam o deploy reproduzível.</p>
+<pre><code class="language-yaml">
+containers:
+  - name: app
+    image: registry.example.com/app:sha-abc123
+</code></pre>
+<h2>GitHub Actions como exemplo</h2>
+<pre><code class="language-yaml">
+name: deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t registry.example.com/app:sha-do-commit .
+      - name: Push image
+        run: docker push registry.example.com/app:sha-do-commit
+</code></pre>
+<p>A etapa de deploy pode aplicar manifestos diretamente, mas uma evolução natural é mover isso para GitOps, como será visto na parte de operação e automação. Não coloque credenciais diretamente no arquivo do pipeline; use secrets do provedor de CI.</p>
+</body></html>

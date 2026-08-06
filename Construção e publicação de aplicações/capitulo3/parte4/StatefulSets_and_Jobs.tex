@@ -1,0 +1,102 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{StatefulSets, Volumes Persistentes e Jobs}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+\item Persistir dados com PV, PVC e StorageClass
+\item Entender StatefulSets e Headless Services
+\item Executar tarefas finitas com Jobs
+\end{itemize}
+
+Até aqui, os Pods podiam ser substituídos sem grande preocupação. Isso funciona bem para aplicações sem estado, mas não para bancos de dados, filas, caches persistentes e serviços que precisam de identidade estável. Nesses casos, precisamos combinar armazenamento persistente, \texttt{StatefulSet} e, em alguns cenários, \texttt{Job}.
+
+\section*{\color{primary}Volumes persistentes}
+
+\texttt{PersistentVolume} (PV) representa uma unidade de armazenamento disponível no cluster. \texttt{PersistentVolumeClaim} (PVC) é o pedido feito pela aplicação. \texttt{StorageClass} descreve como o armazenamento pode ser provisionado dinamicamente.
+
+\begin{lstlisting}[language=bash]
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+\end{lstlisting}
+
+Um Pod ou Deployment pode montar esse PVC:
+
+\begin{lstlisting}[language=bash]
+volumeMounts:
+  - name: data
+    mountPath: /usr/share/nginx/html
+volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: app-data
+\end{lstlisting}
+
+\section*{\color{primary}StatefulSet}
+
+\texttt{StatefulSet} é o controlador indicado quando a aplicação precisa de identidade estável. Os Pods são criados com nomes previsíveis, como \texttt{postgres-0}, \texttt{postgres-1} e \texttt{postgres-2}. Um StatefulSet normalmente trabalha com um Headless Service para oferecer nomes DNS individuais para cada Pod.
+
+\begin{lstlisting}[language=bash]
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+\end{lstlisting}
+
+\section*{\color{primary}Jobs}
+
+\texttt{Job} executa uma tarefa finita até a conclusão. Ele é útil para migrações, cargas iniciais, scripts administrativos e processamentos pontuais. Use Deployment para aplicações sem estado, StatefulSet quando identidade e volume por réplica forem importantes, e Job para tarefas que terminam.
+
+\end{document}

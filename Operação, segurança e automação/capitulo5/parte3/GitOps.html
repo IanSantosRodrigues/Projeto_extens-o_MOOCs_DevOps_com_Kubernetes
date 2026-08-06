@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitOps - DevOps com Kubernetes</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; margin-top: 30px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+        code { font-family: 'Courier New', Courier, monospace; }
+        p code, li code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        a { color: #2980b9; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<h1>GitOps</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Comparar GitOps a outros métodos de implantação (<em>deployment</em>)</li>
+<li>Comparar a implantação tradicional baseada em <em>push</em> (<em>push deployment</em>) com a implantação baseada em <em>pull</em> (<em>pull deployment</em>)</li>
+<li>Implementar GitOps no seu cluster Kubernetes com o ArgoCD</li>
+</ul>
+<p>Um pipeline de implantação simples padrão inclui as seguintes etapas:
+1. O desenvolvedor envia (<em>pushes</em>) o código modificado para um repositório, como o GitHub.
+2. Isso aciona um serviço de CI/CD, como o GitHub Actions, para iniciar a execução.
+3. O serviço de CI/CD executa os testes, compila uma imagem, envia a imagem para um registro e implanta a nova imagem, por exemplo, no Kubernetes.</p>
+<p>Isso é chamado de <strong>implantação baseada em push</strong> (<em>push deployment</em>). O nome é descritivo, pois tudo é "empurrado" (<em>pushed</em>) para a frente pelo passo anterior. Existem alguns desafios com a abordagem de <em>push</em>. Por exemplo, se tivermos um cluster Kubernetes que não está disponível para conexões externas, ou seja, o cluster na sua máquina local ou qualquer cluster ao qual não queremos dar acesso a terceiros. Nesses casos, não é possível fazer com que o CI/CD envie a atualização para o cluster.</p>
+<p>Na <strong>configuração de pull</strong> (<em>pull configuration</em>), o processo é revertido. O cluster, rodando em qualquer lugar, <strong>busca</strong> (<em>pull</em>) a nova imagem e a implantação ocorre automaticamente. A nova imagem ainda será testada e compilada pelo CI/CD. Nós simplesmente aliviamos o CI/CD do fardo da implantação e transferimos a responsabilidade de "buscar" os dados (<em>pulling</em>) para um sistema separado.</p>
+<h3>Watchtower</h3>
+<p>Se você concluiu o curso de DevOps com Docker, deve ter ouvido falar sobre o <a href="https://github.com/containrrr/watchtower">Watchtower</a>, que nos permitiu transformar os "pushes" finais do pipeline de implantação em "pulls" quando rodamos serviços com docker-compose.</p>
+<p><strong>GitOps</strong> trata-se exatamente desta inversão, promovendo boas práticas para o lado operacional. Isto é alcançado mantendo o estado do cluster em um repositório Git, gerenciando, portanto, não só implantações de aplicações, mas também todas as mudanças de infraestrutura no cluster. Isso exigirá configuração adicional e uma mudança de mentalidade, superando a tradição de configurações convencionais em servidores. Mas, quando chegarmos a esse ponto, o GitOps será o último prego no caixão do gerenciamento imperativo de clusters.</p>
+<p>O <a href="https://argo-cd.readthedocs.io/en/stable/">ArgoCD</a> é atualmente a principal ferramenta para GitOps em Kubernetes, e é a nossa escolha para este módulo. No fim das contas, nosso fluxo de trabalho deve ficar assim:
+1. O desenvolvedor executa <em>git push</em> com código ou configurações modificadas.
+2. O serviço de CI/CD (GitHub Actions, no nosso caso) inicia a execução.
+3. O serviço de CI/CD compila e faz o <em>push</em> da nova imagem <strong>e</strong> confirma a alteração na ramificação principal (<em>main</em>, no nosso caso).
+4. O ArgoCD obterá o estado descrito na <em>branch</em> de release (ramo de liberação) e configurará esse estado no nosso cluster.</p>
+<p>Vamos iniciar instalando o ArgoCD seguindo a <a href="https://argo-cd.readthedocs.io/en/stable/getting_started/">documentação do Getting Started</a>:</p>
+<pre><code class="language-awk">kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+</code></pre>
+<p>Agora o ArgoCD está sendo executado no nosso cluster. Ainda precisamos abrir o acesso a ele. Existem várias opções; usaremos um LoadBalancer, com o seguinte comando:</p>
+<pre><code class="language-scilab">kubectl patch svc argocd-server -n argocd -p '{&quot;spec&quot;: {&quot;type&quot;: &quot;LoadBalancer&quot;}}'
+</code></pre>
+<p>Após uma breve espera, o cluster nos fornece um endereço de IP externo:</p>
+<pre><code class="language-armasm">$ kubectl get svc -n argocd
+NAME               TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                      AGE
+...
+argocd-server      LoadBalancer   10.7.5.82     34.88.152.2   80:32029/TCP,443:30574/TCP   17min
+</code></pre>
+<p>A senha inicial para a conta <em>admin</em> é gerada automaticamente e armazenada em texto claro no campo <code>password</code> na <em>secret</em> chamada <code>argocd-initial-admin-secret</code>, presente na configuração de <em>namespace</em> do ArgoCD. Portanto, decodificamos a string em base64 com este comando:</p>
+<pre><code class="language-pgsql">kubectl get -n argocd secrets argocd-initial-admin-secret -o yaml
+</code></pre>
+<p>Com o ArgoCD rodando e logado, vamos tentar implementar a aplicação simples que está disponível no repositório <a href="https://github.com/mluukkai/dwk-app1">dwk-app1</a> usando o ArgoCD. Faça um <em>fork</em> desse repositório se quiser seguir o exemplo!</p>
+<p>Começamos clicando em <strong>Create application</strong> e preenchendo o formulário. Por padrão, a configuração do <em>sync policy</em> fica em <strong>manual</strong>, e também configuramos o <code>path</code> apontando diretamente para <code>.</code> (ponto) no repositório Git, já que a configuração (<em>kustomization.yaml</em>) está no diretório raiz.</p>
+<p>A aplicação é criada, mas constará como ausente e fora de sincronia (<em>Missing and out of sync</em>), visto que o modo foi configurado como manual. Após sincronizá-la e ir para a página da aplicação no ArgoCD, poderemos ver um erro (representado por um símbolo de "coração partido" em um pod). Podemos visualizar mais detalhes usando <code>kubectl get po</code> ou clicando sobre o pod no painel do ArgoCD.</p>
+<p>O problema é que especificamos uma imagem que não existe. Vamos arrumar isso no GitHub alterando nosso <em>kustomization.yaml</em> da seguinte forma:</p>
+<pre><code class="language-yaml">apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- manifests/deployment.yaml
+- manifests/service.yaml
+images:
+- name: PROJECT/IMAGE
+  newName: mluukkai/dwk1
+</code></pre>
+<p>Quando sincronizarmos novamente as mudanças no ArgoCD, um novo pod funcional iniciará e nosso app passará a rodar!</p>
+<p>Se mudarmos a política de sincronização de manual para <strong>automática</strong> na interface do Argo, qualquer mudança no GitHub será aplicada automaticamente no cluster. Teste aumentar o número de réplicas no <em>deployment.yaml</em> e faça o commit; o ArgoCD irá sincronizar as mudanças por conta própria (frequência de checagem a cada 180 segundos) e escalar a aplicação.</p>
+<p>O repositório Git (o <em>source</em>) torna-se a única fonte da verdade, contendo o <em>deployment.yaml</em>, <em>service.yaml</em> e o <em>kustomization.yaml</em>. Qualquer edição à imagem da aplicação passará primeiramente pelas ferramentas do Kustomize e pelo pipeline no GitHub Action:</p>
+<pre><code class="language-yaml">name: Build and publish application
+
+on:
+  push:
+
+jobs:
+  build-publish:
+    name: Build, Push, Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Crie a imagem com a tag SHA do GitHub para obter uma tag exclusiva
+      - name: Build and publish backend
+        run: |-
+          docker build --tag &quot;mluukkai/dwk1:$GITHUB_SHA&quot; .
+          docker push &quot;mluukkai/dwk1:$GITHUB_SHA&quot;
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v3
+
+      - name: Use right image
+        run: kustomize edit set image PROJECT/IMAGE=mluukkai/dwk1:$GITHUB_SHA
+
+      - name: commit kustomization.yaml to GitHub
+        uses: EndBug/add-and-commit@v10
+        with:
+          add: 'kustomization.yaml'
+          message: New version released ${{ github.sha }}
+</code></pre>
+<p>Para que isso funcione, também é necessário permitir permissões de gravação de repositório (<em>write permissions</em>) na configuração de fluxo de trabalho (<em>workflow</em>) do GitHub. E agora temos uma integração GitOps 100% automatizada! </p>
+<p>Os benefícios da implantação com GitOps incluem:
+- <strong>Melhor Segurança:</strong> Ninguém precisa de acesso ao cluster, nem os serviços de CI/CD. Não há necessidade de compartilhar chaves com terceiros; todos apenas confirmam (<em>commit</em>) o código no Git.
+- <strong>Maior Transparência:</strong> Todo o escopo é definido no GitHub. Se uma pessoa nova entrar no time, ela só precisará verificar o repositório, não sendo necessário repassar conhecimentos ocultos.
+- <strong>Maior Rastreabilidade:</strong> Todas as mudanças no cluster têm controle de versão. É fácil saber quem fez as mudanças e como ficou o estado.
+- <strong>Redução de Risco:</strong> Caso ocorra algum erro e as coisas quebrem, usar um comando <code>git revert</code> é o suficiente para voltar à normalidade do cluster.
+- <strong>Portabilidade:</strong> Ao mudar de provedor de Nuvem, basta montar um novo cluster e apontá-lo para o mesmo repositório - pronto, seu cluster está implementado novamente.</p>
+<h3>Exercício 4.7: Passos de bebê para GitOps</h3>
+<p>Mova o aplicativo <em>Log output</em> para usar o GitOps para que, ao fazer o <em>commit</em> no repositório, o aplicativo seja atualizado automaticamente.</p>
+<h3>Exercício 4.8: O Projeto, etapa 24</h3>
+<p>Mova O Projeto (<em>The Project</em>) para usar o GitOps de maneira que, após um <em>commit</em>, a aplicação seja atualizada automaticamente. Neste exercício, basta que a <em>branch main</em> (ramificação principal) faça o <em>deploy</em> no cluster.</p>
+<hr />
+<h2>Múltiplos ambientes (More environments)</h2>
+<p>Se um aplicativo possuir muitos ambientes, como produção (<em>production</em>), teste (<em>staging</em>) e desenvolvimento, defini-los de forma direta envolve muito copia-e-cola (<em>copy-paste</em>). Com o uso do Kustomize, a recomendação é definir uma "base" (<em>base</em>) comum para todos e em seguida utilizar as "camadas" (<em>overlays</em>) relativas a cada ambiente, onde apenas as partes diferentes estarão configuradas.</p>
+<p>Estrutura de diretório:</p>
+<pre><code class="language-stylus">.
+├── base
+│   ├── deployment.yaml
+│   └── kustomization.yaml
+└── overlays
+    ├── prod
+    │   ├── deployment.yaml
+    │   └── kustomization.yaml
+    └── staging
+        └── kustomization.yaml
+</code></pre>
+<p>As partes fixas permanecem em <code>base</code>, já em <code>overlays/prod/deployment.yaml</code> alteramos por exemplo, as réplicas:</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep
+spec:
+  replicas: 3
+</code></pre>
+<p>E no <code>overlays/prod/kustomization.yaml</code> usamos as tags <code>patches</code> para aplicar essas modificações específicas de produção na base:</p>
+<pre><code class="language-yaml">apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ./../../base
+patches:
+  - path: deployment.yaml
+
+namePrefix: prod-
+
+images:
+  - name: PROJECT/IMAGE
+    newName: nginx:1.31-alpine
+</code></pre>
+<h2>Definindo o todo com YAML (Defining the whole with yaml)</h2>
+<p>Até agora usamos a UI do ArgoCD para definir <em>applications</em>. Porém, isso também pode ser feito de modo declarativo e definindo uma configuração como um recurso do Kubernetes.
+Para a versão de produção, a configuração <code>application.yaml</code> ficará assim:</p>
+<pre><code class="language-yaml">apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/mluukkai/gitopstest
+    path: overlays/prod
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+</code></pre>
+<p>Depois de declarar tudo num único YAML, apenas integre via <code>kubectl apply -n argocd -f application.yaml</code>.</p>
+<h3>Exercício 4.9: O projeto, etapa 25</h3>
+<p>Melhore as definições do seu Projeto da seguinte forma:
+- Crie dois ambientes separados (<em>production</em> e <em>staging</em>) em <em>namespaces</em> diferentes.
+- Cada commit na ramificação <code>main</code> deve fazer o <em>deploy</em> no <em>staging</em>.
+- Cada commit <strong>com tag</strong> deve fazer o <em>deploy</em> no ambiente <em>production</em>.
+- Em staging, o <em>broadcaster</em> apenas registra mensagens (logs); não deverá envia-las para serviços externos.
+- Em staging, o banco de dados não recebe <em>backups</em>.</p>
+<h3>Exercício 4.10: O projeto, o grand finale</h3>
+<p>Finalize a infraestrutura do seu projeto, fazendo com que sejam utilizados repositórios totalmente distintos: um para os códigos-fonte da aplicação e outro unicamente para as configurações de <em>deployment</em>.</p>
+</body>
+</html>

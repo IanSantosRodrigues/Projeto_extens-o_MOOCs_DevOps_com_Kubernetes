@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 4.6 - O projeto, passo 23</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 4.6 - O projeto, passo 23</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Publicar Mensagens (Backend)</strong>: Integre a biblioteca do NATS no backend principal. Logo após inserir/atualizar um Todo no banco de dados com sucesso, utilize <code>nc.publish('todo_events', JSON.stringify(todoData))</code>.</li>
+<li><strong>Criar o Serviço Broadcaster</strong>: Crie um novo microsserviço (ex: Node, Python, Go) do zero. Este serviço conectará ao NATS e fará a inscrição (<em>subscribe</em>) no tópico <code>todo_events</code>.</li>
+<li><strong>Encaminhar para Serviço Externo</strong>: Quando o <em>broadcaster</em> receber uma mensagem da fila, ele deverá fazer uma requisição POST HTTP (ex: usando <code>axios</code> ou <code>curl</code>) para a URL de um <em>webhook</em> do Discord/Telegram (ou um <em>webhook</em> de testes genérico) com os dados formatados.</li>
+<li><strong>Implantação no K8s</strong>: Crie um <code>Deployment</code> para o <em>broadcaster</em> garantindo que ele tenha a URL do NATS e a URL do webhook injetadas via variáveis de ambiente.</li>
+</ol>
+    </div>
+</body>
+</html>

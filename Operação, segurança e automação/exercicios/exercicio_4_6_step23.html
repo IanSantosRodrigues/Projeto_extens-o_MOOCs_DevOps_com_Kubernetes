@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício 4.6: O projeto, passo 23</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .exercise-box { background-color: #e8f4f8; border-left: 5px solid #3498db; padding: 20px; border-radius: 4px; margin-top: 20px; }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Exercício 4.6: O projeto, passo 23</h1>
+    <div class="exercise-box">
+        <p><em>Nota: Este exercício aborda a criação do Broadcaster NATS.</em><br>Crie um novo serviço separado para enviar mensagens de status das tarefas (todos) para algum serviço de chat externo. Vamos chamar o novo serviço de 'broadcaster'.<br>Requisitos: <br>1. O backend deve enviar uma mensagem para a fila do NATS ao salvar ou atualizar uma tarefa;<br>2. O serviço <em>broadcaster</em> deve assinar (subscribe) as mensagens do NATS; <br>3. O <em>broadcaster</em> deve repassar a mensagem para um serviço externo em um formato suportado (Você pode integrar com Discord, Telegram, Slack, ou usar um endpoint genérico que registre os logs do payload).</p>
+    </div>
+</body>
+</html>

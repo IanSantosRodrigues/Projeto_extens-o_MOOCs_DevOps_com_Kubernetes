@@ -1,0 +1,40 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.6: O projeto, passo 23}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.6: O projeto, passo 23]
+\textit{Nota: Este exercício aborda a criação do Broadcaster NATS.}
+
+Crie um novo serviço separado para enviar mensagens de status das tarefas (todos) para algum serviço de chat externo. Vamos chamar o novo serviço de 'broadcaster'.
+
+Requisitos: 
+
+1. O backend deve enviar uma mensagem para a fila do NATS ao salvar ou atualizar uma tarefa;
+
+2. O serviço \textit{broadcaster} deve assinar (subscribe) as mensagens do NATS; 
+
+3. O \textit{broadcaster} deve repassar a mensagem para um serviço externo em um formato suportado (Você pode integrar com Discord, Telegram, Slack, ou usar um endpoint genérico que registre os logs do payload).
+\end{tcolorbox}
+
+\end{document}

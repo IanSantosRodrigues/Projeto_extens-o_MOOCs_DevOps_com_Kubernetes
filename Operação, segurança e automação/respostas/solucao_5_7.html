@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 5.7 - Faça o deploy para o serverless</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 5.7 - Faça o deploy para o serverless</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Ajuste o YAML do Ping-pong</strong>: Altere o atributo <code>kind: Deployment</code> para <code>kind: Service</code> (do <code>apiVersion: serving.knative.dev/v1</code>). Especifique o template da imagem dentro dessa estrutura. O Knative cuidará automaticamente dos <em>Pods</em>, autoescalonamento e tráfego.</li>
+<li><strong>Ajustar as Conexões do Cluster</strong>: O <em>Log output</em>, que dependia do ping-pong, deve ser atualizado para contatar o serviço usando o Nome de Domínio Totalmente Qualificado do Kubernetes (<em>FQDN</em>), por exemplo: <code>http://pingpong.default.svc.cluster.local</code>.</li>
+<li><strong>Criação do HTTPRoute (Opcional)</strong>: Se quiser testar chamadas originadas fora do cluster, crie o filtro <code>URLRewrite</code> apontando o <code>hostname</code> para a URL dinâmica do Knative. Por exemplo, substituindo a raiz usando <code>replacePrefixMatch</code>. </li>
+<li><strong>Apply</strong>: Faça o deploy dessa configuração; ao deixar o serviço de Log sem requisitar o Ping-pong, ele escalará o ping-pong para zero <em>pods</em>. No momento em que uma chamada HTTP for realizada, ele rapidamente criará um novo.</li>
+</ol>
+    </div>
+</body>
+</html>

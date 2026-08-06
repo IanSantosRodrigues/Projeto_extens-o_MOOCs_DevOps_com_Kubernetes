@@ -1,0 +1,155 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{Componentes Internos do Kubernetes}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Explicar, em termos gerais, como o Kubernetes opera.
+\end{itemize}
+
+Em vez de pensar no Kubernetes como algo completamente novo, percebi que compará-lo a um sistema operacional ajuda bastante. Não sou nenhum especialista em sistemas operacionais, mas todos nós os usamos.
+
+O Kubernetes é uma camada sobre a qual executamos nossas aplicações. Ele pega os recursos que estão acessíveis a partir das camadas inferiores e gerencia nossas aplicações e recursos. Ele também fornece serviços, como DNS, para as aplicações. Com essa mentalidade de sistema operacional, também podemos tentar fazer o caminho inverso: você talvez já tenha utilizado um cron (ou o \textit{task scheduler} no Windows) para agendar tarefas em lote (\textit{batch jobs}), como salvar os backups de algumas aplicações. A mesma coisa pode ser feita no Kubernetes com CronJobs.
+
+Agora que começaremos a falar sobre o funcionamento interno, obteremos novos conhecimentos a respeito do Kubernetes e seremos capazes de prever e resolver problemas que decorram de sua natureza.
+
+Como esta seção é principalmente uma reiteração da documentação do Kubernetes, incluirei vários links para a documentação oficial. Apesar de estarmos falando sobre os componentes internos, não discutiremos como montar seu próprio cluster do zero manualmente. Se você deseja "sujar as mãos" e configurá-lo, deveria ler e completar Kubernetes the Hard Way, escrito por Kelsey Hightower.
+
+\subsection*{\color{secondary}Controladores (\textit{Controllers})}
+Os Controladores monitoram o estado do seu cluster e tentam sempre aproximar o estado atual do estado desejado. Quando você declara \textit{X} réplicas de um Pod no seu \texttt{deployment.yaml}, um controlador chamado Replication Controller garantirá que isso seja mantido como verdade. Existem controladores específicos para várias responsabilidades.
+
+\subsection*{\color{secondary}Plano de Controle do Kubernetes (\textit{Kubernetes Control Plane})}
+O Plano de Controle do Kubernetes (\textit{Control Plane}) é responsável pelo gerenciamento de todo o cluster do Kubernetes. É o principal componente de orquestração responsável por garantir que o estado desejado do cluster seja correspondente ao estado atual. O Control Plane toma decisões globais sobre o cluster (como, por exemplo, agendamento de tarefas) e também detecta e responde aos eventos do cluster (como o início de um novo Pod caso o número de réplicas de um deployment não esteja sendo satisfeito).
+
+O Plano de Controle é formado por:
+\begin{itemize}
+    \item \textbf{etcd}: Um armazenamento chave-valor (\textit{key-value storage}) que o Kubernetes usa para salvar e respaldar todos os dados do cluster.
+    \item \textbf{kube-scheduler}: Decide em qual \textit{node} (nó) um Pod deverá ser executado.
+    \item \textbf{kube-controller-manager}: É o responsável por executar e controlar todos os controladores.
+    \item \textbf{kube-apiserver}: Expõe o \textit{Control Plane} do Kubernetes aos usuários por meio de uma API.
+\end{itemize}
+
+Existe também um componente extra chamado \textit{cloud-controller-manager}, que permite vincular o cluster à API de um provedor de Nuvem. Se você quisesse montar seu próprio cluster na Hetzner, por exemplo, poderia utilizar o \texttt{hcloud-cloud-controller-manager} dentro do seu próprio cluster Kubernetes sendo hospedado através de máquinas virtuais (VMs) deles.
+
+\subsection*{\color{secondary}Componentes de Nó (\textit{Node Components})}
+Cada nó (node) possui alguns componentes com o intuito de manter os \textit{Pods} funcionando:
+\begin{itemize}
+    \item \textbf{kubelet}: Garante que os contêineres estão executando as suas rotinas em um \textit{Pod}.
+    \item \textbf{kube-proxy}: É um proxy e um mantenedor de regras de rede. Permite conexões com a parte interna e externa do cluster, para que os Serviços operem conforme os usamos.
+\end{itemize}
+Além disso, cada nó tem o chamado \textit{Container Runtime}. Neste curso, estamos usando o \textbf{Docker} como tempo de execução.
+
+\subsection*{\color{secondary}Componentes Adicionais (\textit{Addons})}
+Apesar de tudo o que foi citado acima, o Kubernetes permite componentes adicionais (\textit{Addons}), que utilizam os mesmos recursos do Kubernetes já discutidos e estendem suas funcionalidades. Você pode inspecionar quais recursos foram criados por essas extensões usando o comando no \textit{namespace} \texttt{kube-system}:
+
+\begin{lstlisting}[language=bash]
+$ kubectl -n kube-system get all
+NAME                                          READY   STATUS      RESTARTS   AGE
+pod/coredns-ccb96694c-t9rr2                   1/1     Running     0          42h
+pod/helm-install-traefik-crd-5446f            0/1     Completed   0          42h
+pod/helm-install-traefik-p8c2h                0/1     Completed   2          42h
+pod/local-path-provisioner-5cf85fd84d-s9x7p   1/1     Running     0          42h
+pod/metrics-server-5985cbc9d7-hngw9           1/1     Running     0          42h
+pod/svclb-traefik-68897c6e-bq9k7              2/2     Running     0          42h
+pod/svclb-traefik-68897c6e-kw5p4              2/2     Running     0          42h
+pod/svclb-traefik-68897c6e-qkc5c              2/2     Running     0          42h
+pod/traefik-5d45fc8cc9-ws66x                  1/1     Running     0          42h
+
+NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP                                 PORT(S)                      AGE
+service/kube-dns         ClusterIP      10.43.0.10     <none>                                      53/UDP,53/TCP,9153/TCP       42h
+service/metrics-server   ClusterIP      10.43.224.88   <none>                                      443/TCP                      42h
+service/traefik          LoadBalancer   10.43.140.57   192.168.144.3,192.168.144.4,192.168.144.5   80:32558/TCP,443:32155/TCP   42h
+\end{lstlisting}
+
+Para ter uma visão abrangente sobre como cada parte conversa entre si, leia o artigo \textit{what happens when k8s}, que explora o que ocorre de forma interna quando você executa um comando como \texttt{kubectl run nginx --image=nginx --replicas=3}, o que ilumina de verdade a "mágica" que atua por debaixo dos panos.
+
+\section*{\color{primary}Auto-recuperação (\textit{Self-healing})}
+
+Anteriormente, conversamos brevemente a respeito da natureza de auto-recuperação do Kubernetes e sobre como \textit{Pods} que são deletados podem ser recriados de maneira automática.
+
+Mas o que ocorre se apagarmos ou derrubarmos um nó (node) contendo um \textit{pod}? Primeiramente, faremos o \textit{deploy} de um aplicativo web com \textit{ingress}, e confirmaremos onde seu \textit{pod} está sendo executado:
+
+\begin{lstlisting}[language=bash]
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/deployment.yaml \
+                -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/ingress.yaml \
+                -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/service.yaml
+  deployment.apps/hashresponse-dep created
+  ingress.extensions/dwk-material-ingress created
+  service/hashresponse-svc created
+
+$ curl localhost:8081
+9eaxf3: 8k2deb
+
+$ kubectl describe po hashresponse-dep-57bcc888d7-5gkc9 | grep 'Node:'
+  Node:         k3d-k3s-default-agent-1/172.30.0.2
+\end{lstlisting}
+
+Vemos aqui que ele está localizado em \texttt{agent-1}. Em seguida, faremos com que este nó saia da rede, tirando-o do ar usando um "pause" via docker:
+
+\begin{lstlisting}[language=bash]
+$ docker ps
+  CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS              PORTS                                           NAMES
+  5c43fe0a936e        rancher/k3d-proxy:v3.0.0   "/bin/sh -c nginx-pr..." 10 days ago         Up 2 hours          0.0.0.0:8081->80/tcp, 0.0.0.0:50207->6443/tcp   k3d-k3s-default-serverlb
+  fea775395132        rancher/k3s:latest         "/bin/k3s agent"         10 days ago         Up 2 hours                                                          k3d-k3s-default-agent-1
+  70b68b040360        rancher/k3s:latest         "/bin/k3s agent"         10 days ago         Up 2 hours          0.0.0.0:8082->30080/tcp                         k3d-k3s-default-agent-0
+  28cc6cef76ee        rancher/k3s:latest         "/bin/k3s server --t..." 10 days ago         Up 2 hours                                                          k3d-k3s-default-server-0
+
+$ docker pause k3d-k3s-default-agent-1
+k3d-k3s-default-agent-1
+\end{lstlisting}
+
+Aguardaremos alguns minutos, e este deverá ser o estado que encontraremos:
+
+\begin{lstlisting}[language=bash]
+$ kubectl get po
+NAME                                READY   STATUS        RESTARTS   AGE
+hashresponse-dep-57bcc888d7-5gkc9   1/1     Terminating   0          15m
+hashresponse-dep-57bcc888d7-4klvg   1/1     Running       0          30s
+
+$ curl localhost:8081
+6xluh2: ta0ztp
+\end{lstlisting}
+
+E caso seja o único \textit{control-plane} (Plano de Controle) que acabe deletado ou offline? Não ocorrerá nada de bom. Sendo um cluster local, ele se mostra um ponto de falha única (SPOF - Single Point of Failure). Confira a documentação do Kubernetes sobre Options for Highly Available topology para evitar que seu cluster inteiro fique inválido devido a uma simples falha de hardware.
+
+\end{document}

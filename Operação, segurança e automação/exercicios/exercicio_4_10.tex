@@ -1,0 +1,32 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.10: O projeto, o grand finale}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.10: O projeto, o grand finale]
+Finalize a infraestrutura do seu projeto isolando completamente os repositórios, de acordo com as melhores práticas de GitOps.
+
+Faça com que sejam utilizados repositórios totalmente distintos: um repositório exclusivo para os códigos-fonte da aplicação (Backend, Frontend) e um segundo repositório dedicado unicamente para os manifestos e configurações de \textit{deployment} (Kustomize, YAMLs do Kubernetes).
+\end{tcolorbox}
+
+\end{document}

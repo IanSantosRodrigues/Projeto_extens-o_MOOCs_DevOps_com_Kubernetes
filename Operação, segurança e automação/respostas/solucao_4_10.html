@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 4.10 - O projeto, o grand finale</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 4.10 - O projeto, o grand finale</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Separação de Repositórios</strong>: Crie um repositório chamado <code>meu-projeto-codigo</code> (com arquivos Node/Go/Python) e um repositório <code>meu-projeto-manifestos</code> (apenas arquivos YAML/Kustomize).</li>
+<li><strong>Pipeline de CI (Código)</strong>: Configure o GitHub Actions no repositório de código para compilar as imagens e enviá-las ao Docker Hub, anexando o <code>$GITHUB_SHA</code> como tag da imagem.</li>
+<li><strong>Integração CI -&gt; Manifestos</strong>: Adicione um passo final ao GitHub Actions que faz um <code>git clone</code> do repositório <code>meu-projeto-manifestos</code> com um Token de Acesso Pessoal (PAT). Nesse diretório, rode <code>kustomize edit set image imagem-backend=meu-usuario/backend:$GITHUB_SHA</code>, e faça o <em>commit</em> e <em>push</em> da mudança no repositório de manifestos.</li>
+<li><strong>Pipeline de CD (ArgoCD)</strong>: Configure o ArgoCD para escutar o repositório <code>meu-projeto-manifestos</code>. A alteração do <em>commit</em> de CI acionará o <em>Sync</em> automático do ArgoCD.</li>
+</ol>
+    </div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 2.6 - Monitoramento básico}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\textbf{Guia de Solução:}
+
+\subsection*{\color{secondary}Passo a Passo}
+
+1. Verifique métricas rápidas com \texttt{kubectl top pods} e \texttt{kubectl top nodes} quando houver Metrics Server.
+2. Para Prometheus/Grafana, prefira namespace \texttt{monitoring} e instalação via Helm.
+3. Observe reinícios com \texttt{kubectl get pods} e detalhes com \texttt{kubectl describe pod}.
+4. Registre quais métricas indicam saúde da aplicação: CPU, memória, READY, restarts e latência.
+
+\end{document}

@@ -1,0 +1,32 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.3: Prometheus}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.3: Prometheus]
+Inicie o Prometheus utilizando o Helm em seu cluster e use o \texttt{port-forward} para acessar o site GUI (interface gráfica) na sua máquina local.
+
+Escreva uma consulta (\textit{query}) PromQL que mostre o número de pods criados por StatefulSets no namespace \texttt{prometheus}. O valor retornado pela consulta deve refletir os 3 pods diferentes em execução.
+\end{tcolorbox}
+
+\end{document}

@@ -1,0 +1,34 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.2: O projeto, passo 21}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.2: O projeto, passo 21]
+Crie as sondas de prontidão e vivacidade (\texttt{ReadinessProbes} e \texttt{LivenessProbes}), bem como o \textit{endpoint} necessário (como \texttt{/healthz}) para O Projeto, de forma a garantir que a aplicação esteja funcionando corretamente e conectada ao banco de dados.
+
+Adicione um botão à sua interface que pode ser usado para 'quebrar' a aplicação (simular uma falha). Pressionar o botão deve fazer com que a operação normal pare.
+
+Certifique-se de que, uma vez quebrado, o Kubernetes identifique a falha e um novo pod inicie, ficando saudável novamente.
+\end{tcolorbox}
+
+\end{document}

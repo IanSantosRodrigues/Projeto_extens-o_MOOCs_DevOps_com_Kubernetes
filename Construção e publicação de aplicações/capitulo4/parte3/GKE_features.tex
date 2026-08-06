@@ -1,0 +1,84 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Recursos de GKE, Ingress, TLS e Canary Deployment}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+\item Publicar aplicações com Ingress ou Gateway
+\item Configurar HTTPS com TLS e cert-manager
+\item Usar labels, annotations e Canary Deployment para controlar tráfego
+\end{itemize}
+
+Depois que a aplicação está no cluster e o pipeline consegue publicar novas versões, o próximo passo é lidar com tráfego externo, segurança de transporte e estratégias de lançamento. Em cloud, esses temas aparecem juntos: o provedor oferece balanceadores, o Kubernetes oferece objetos declarativos e ferramentas como cert-manager automatizam certificados.
+
+\section*{\color{primary}Ingress e Ingress Controller}
+
+\texttt{Ingress} é um recurso que descreve regras HTTP e HTTPS para chegar aos Services internos. Ele não funciona sozinho: é necessário um \texttt{Ingress Controller}, como NGINX Ingress Controller, Traefik ou controlador do provedor de nuvem.
+
+\begin{lstlisting}[language=bash]
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-svc
+                port:
+                  number: 80
+\end{lstlisting}
+
+\section*{\color{primary}TLS e cert-manager}
+
+Para HTTPS, o Ingress precisa de um certificado TLS. Em estudos, esse certificado pode ser criado manualmente. Em produção, é comum usar \texttt{cert-manager} para emitir e renovar certificados automaticamente.
+
+\begin{lstlisting}[language=bash]
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: app-tls
+spec:
+  secretName: app-tls-secret
+  dnsNames:
+    - app.example.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+\end{lstlisting}
+
+\section*{\color{primary}Labels e annotations}
+
+Labels são usadas para seleção e organização. Annotations armazenam metadados usados por controladores, como Ingress Controller, cert-manager e ferramentas de observabilidade. Use labels para aquilo que será selecionado; use annotations para instruções auxiliares interpretadas por controladores externos.
+
+\section*{\color{primary}Canary Deployment}
+
+Canary Deployment libera uma nova versão para uma parte pequena do tráfego antes de substituir tudo. Com Ingress Controller, isso pode ser feito por annotations específicas; com ferramentas como Argo Rollouts, pode ser feito de forma mais estruturada e observável. A ideia é reduzir risco antes de ampliar o tráfego para todos os usuários.
+
+\section*{\color{primary}Fechamento do capítulo}
+
+Nesta parte, a aplicação deixou de ser apenas um Pod em execução. Ela passou a ter configuração externa, persistência, rede estável, publicação HTTP/HTTPS, pipeline e observabilidade. Esse é o caminho para transformar uma aplicação básica em uma aplicação preparada para cloud.
+
+\end{document}

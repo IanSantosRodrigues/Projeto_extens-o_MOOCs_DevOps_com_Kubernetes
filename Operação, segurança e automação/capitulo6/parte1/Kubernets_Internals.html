@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Componentes Internos do Kubernetes - DevOps com Kubernetes</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; margin-top: 30px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+        code { font-family: 'Courier New', Courier, monospace; }
+        p code, li code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        a { color: #2980b9; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<h1>Componentes Internos do Kubernetes (<em>Kubernetes Internals</em>)</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Explicar, em termos gerais, como o Kubernetes opera.</li>
+</ul>
+<p>Em vez de pensar no Kubernetes como algo completamente novo, percebi que compará-lo a um sistema operacional ajuda bastante. Não sou nenhum especialista em sistemas operacionais, mas todos nós os usamos.</p>
+<p>O Kubernetes é uma camada sobre a qual executamos nossas aplicações. Ele pega os recursos que estão acessíveis a partir das camadas inferiores e gerencia nossas aplicações e recursos. Ele também fornece serviços, como DNS, para as aplicações. Com essa mentalidade de sistema operacional, também podemos tentar fazer o caminho inverso: você talvez já tenha utilizado um <a href="https://en.wikipedia.org/wiki/Cron">cron</a> (ou o <em>task scheduler</em> no Windows) para agendar tarefas em lote (<em>batch jobs</em>), como salvar os backups de algumas aplicações. A mesma coisa pode ser feita no Kubernetes com <a href="https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/">CronJobs</a>.</p>
+<p>Agora que começaremos a falar sobre o funcionamento interno, obteremos novos conhecimentos a respeito do Kubernetes e seremos capazes de prever e resolver problemas que decorram de sua natureza.</p>
+<p>Como esta seção é principalmente uma reiteração da documentação do Kubernetes, incluirei vários links para a documentação oficial. Apesar de estarmos falando sobre os componentes internos, não discutiremos como montar seu próprio cluster do zero manualmente. Se você deseja "sujar as mãos" e configurá-lo, deveria ler e completar <a href="https://github.com/kelseyhightower/kubernetes-the-hard-way">Kubernetes the Hard Way</a>, escrito por Kelsey Hightower.</p>
+<h3>Controladores (<em>Controllers</em>)</h3>
+<p>Os <a href="https://kubernetes.io/docs/concepts/architecture/controller/">Controladores</a> monitoram o estado do seu cluster e tentam sempre aproximar o estado atual do estado desejado. Quando você declara <em>X</em> réplicas de um Pod no seu <code>deployment.yaml</code>, um controlador chamado <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/">Replication Controller</a> garantirá que isso seja mantido como verdade. Existem controladores específicos para várias responsabilidades.</p>
+<h3>Plano de Controle do Kubernetes (<em>Kubernetes Control Plane</em>)</h3>
+<p>O <a href="https://kubernetes.io/docs/concepts/overview/components/#control-plane-components">Plano de Controle do Kubernetes</a> (<em>Control Plane</em>) é responsável pelo gerenciamento de todo o cluster do Kubernetes. É o principal componente de orquestração responsável por garantir que o estado desejado do cluster seja correspondente ao estado atual. O Control Plane toma decisões globais sobre o cluster (como, por exemplo, agendamento de tarefas) e também detecta e responde aos eventos do cluster (como o início de um novo Pod caso o número de réplicas de um deployment não esteja sendo satisfeito).</p>
+<p>O Plano de Controle é formado por:
+- <strong>etcd</strong>: Um armazenamento chave-valor (<em>key-value storage</em>) que o Kubernetes usa para salvar e respaldar todos os dados do cluster.
+- <strong>kube-scheduler</strong>: Decide em qual <em>node</em> (nó) um Pod deverá ser executado.
+- <strong>kube-controller-manager</strong>: É o responsável por executar e controlar todos os controladores.
+- <strong>kube-apiserver</strong>: Expõe o <em>Control Plane</em> do Kubernetes aos usuários por meio de uma API.</p>
+<p>Existe também um componente extra chamado <em>cloud-controller-manager</em>, que permite vincular o cluster à API de um provedor de Nuvem. Se você quisesse montar seu próprio cluster na <a href="https://www.hetzner.com/cloud">Hetzner</a>, por exemplo, poderia utilizar o <a href="https://github.com/hetznercloud/hcloud-cloud-controller-manager">hcloud-cloud-controller-manager</a> dentro do seu próprio cluster Kubernetes sendo hospedado através de máquinas virtuais (VMs) deles.</p>
+<h3>Componentes de Nó (<em>Node Components</em>)</h3>
+<p>Cada nó (node) possui alguns <a href="https://kubernetes.io/docs/concepts/overview/components/#node-components">componentes</a> com o intuito de manter os <em>Pods</em> funcionando:
+- <strong>kubelet</strong>: Garante que os contêineres estão executando as suas rotinas em um <em>Pod</em>.
+- <strong>kube-proxy</strong>: É um proxy e um mantenedor de regras de rede. Permite conexões com a parte interna e externa do cluster, para que os Serviços operem conforme os usamos.</p>
+<p>Além disso, cada nó tem o chamado <em>Container Runtime</em>. Neste curso, estamos usando o <strong>Docker</strong> como tempo de execução (runtime).</p>
+<h3>Componentes Adicionais (<em>Addons</em>)</h3>
+<p>Apesar de tudo o que foi citado acima, o Kubernetes permite componentes <a href="https://kubernetes.io/docs/concepts/cluster-administration/addons/">adicionais (<em>Addons</em>)</a>, que utilizam os mesmos recursos do Kubernetes já discutidos e estendem suas funcionalidades. Você pode inspecionar quais recursos foram criados por essas extensões usando o comando no <em>namespace</em> <code>kube-system</code>:</p>
+<pre><code class="language-nix">$ kubectl -n kube-system get all
+NAME                                          READY   STATUS      RESTARTS   AGE
+pod/coredns-ccb96694c-t9rr2                   1/1     Running     0          42h
+pod/helm-install-traefik-crd-5446f            0/1     Completed   0          42h
+pod/helm-install-traefik-p8c2h                0/1     Completed   2          42h
+pod/local-path-provisioner-5cf85fd84d-s9x7p   1/1     Running     0          42h
+pod/metrics-server-5985cbc9d7-hngw9           1/1     Running     0          42h
+pod/svclb-traefik-68897c6e-bq9k7              2/2     Running     0          42h
+pod/svclb-traefik-68897c6e-kw5p4              2/2     Running     0          42h
+pod/svclb-traefik-68897c6e-qkc5c              2/2     Running     0          42h
+pod/traefik-5d45fc8cc9-ws66x                  1/1     Running     0          42h
+
+NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP                                 PORT(S)                      AGE
+service/kube-dns         ClusterIP      10.43.0.10     &lt;none&gt;                                      53/UDP,53/TCP,9153/TCP       42h
+service/metrics-server   ClusterIP      10.43.224.88   &lt;none&gt;                                      443/TCP                      42h
+service/traefik          LoadBalancer   10.43.140.57   192.168.144.3,192.168.144.4,192.168.144.5   80:32558/TCP,443:32155/TCP   42h
+
+NAME                                    DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+daemonset.apps/svclb-traefik-68897c6e   3         3         3       3            3           &lt;none&gt;          42h
+
+NAME                                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/coredns                  1/1     1            1           42h
+deployment.apps/local-path-provisioner   1/1     1            1           42h
+deployment.apps/metrics-server           1/1     1            1           42h
+deployment.apps/traefik                  1/1     1            1           42h
+
+NAME                                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/coredns-ccb96694c                   1         1         1       42h
+replicaset.apps/local-path-provisioner-5cf85fd84d   1         1         1       42h
+replicaset.apps/metrics-server-5985cbc9d7           1         1         1       42h
+replicaset.apps/traefik-5d45fc8cc9                  1         1         1       42h
+
+NAME                                 STATUS     COMPLETIONS   DURATION   AGE
+job.batch/helm-install-traefik       Complete   1/1           42s        42h
+job.batch/helm-install-traefik-crd   Complete   1/1           31s        42h
+</code></pre>
+<p>Para ter uma visão abrangente sobre como cada parte conversa entre si, leia o artigo <a href="https://github.com/jamiehannaford/what-happens-when-k8s">what happens when k8s</a>, que explora o que ocorre de forma interna quando você executa um comando como <code>kubectl run nginx --image=nginx --replicas=3</code>, o que ilumina de verdade a "mágica" que atua por debaixo dos panos.</p>
+<h2>Auto-recuperação (<em>Self-healing</em>)</h2>
+<p>Anteriormente, conversamos brevemente a respeito da natureza de auto-recuperação do Kubernetes e sobre como <em>Pods</em> que são deletados podem ser recriados de maneira automática.</p>
+<p>Mas o que ocorre se apagarmos ou derrubarmos um nó (node) contendo um <em>pod</em>? 
+Primeiramente, faremos o <em>deploy</em> de um aplicativo web com <em>ingress</em>, e confirmaremos onde seu <em>pod</em> está sendo executado:</p>
+<pre><code class="language-awk">$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/deployment.yaml                 -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/ingress.yaml                 -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/service.yaml
+  deployment.apps/hashresponse-dep created
+  ingress.extensions/dwk-material-ingress created
+  service/hashresponse-svc created
+
+$ curl localhost:8081
+9eaxf3: 8k2deb
+
+$ kubectl describe po hashresponse-dep-57bcc888d7-5gkc9 | grep 'Node:'
+  Node:         k3d-k3s-default-agent-1/172.30.0.2
+</code></pre>
+<p>Vemos aqui que ele está localizado em <code>agent-1</code>. Em seguida, faremos com que este nó saia da rede, tirando-o do ar usando um "pause" via docker:</p>
+<pre><code class="language-x86asm">$ docker ps
+  CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS              PORTS                                           NAMES
+  5c43fe0a936e        rancher/k3d-proxy:v3.0.0   &quot;/bin/sh -c nginx-pr…&quot;   10 days ago         Up 2 hours          0.0.0.0:8081-&gt;80/tcp, 0.0.0.0:50207-&gt;6443/tcp   k3d-k3s-default-serverlb
+  fea775395132        rancher/k3s:latest         &quot;/bin/k3s agent&quot;         10 days ago         Up 2 hours                                                          k3d-k3s-default-agent-1
+  70b68b040360        rancher/k3s:latest         &quot;/bin/k3s agent&quot;         10 days ago         Up 2 hours          0.0.0.0:8082-&gt;30080/tcp                         k3d-k3s-default-agent-0
+  28cc6cef76ee        rancher/k3s:latest         &quot;/bin/k3s server --t…&quot;   10 days ago         Up 2 hours                                                          k3d-k3s-default-server-0
+
+$ docker pause k3d-k3s-default-agent-1
+k3d-k3s-default-agent-1
+</code></pre>
+<p>Aguardaremos alguns minutos, e este deverá ser o estado que encontraremos:</p>
+<pre><code class="language-subunit">$ kubectl get po
+NAME                                READY   STATUS        RESTARTS   AGE
+hashresponse-dep-57bcc888d7-5gkc9   1/1     Terminating   0          15m
+hashresponse-dep-57bcc888d7-4klvg   1/1     Running       0          30s
+
+$ curl localhost:8081
+6xluh2: ta0ztp
+</code></pre>
+<p>O que acabou de acontecer? Leia <a href="https://dev.to/duske/how-kubernetes-handles-offline-nodes-53b5">esta explicação</a> sobre como o Kubernetes trata os nós offline.</p>
+<p>E caso seja o único <em>control-plane</em> (Plano de Controle) que acabe deletado ou offline? Não ocorrerá nada de bom. Sendo um cluster local, ele se mostra um ponto de falha única (SPOF - Single Point of Failure). Confira a documentação do Kubernetes sobre <a href="https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/">Options for Highly Available topology</a> para evitar que seu cluster inteiro fique inválido devido a uma simples falha de hardware.</p>
+</body>
+</html>

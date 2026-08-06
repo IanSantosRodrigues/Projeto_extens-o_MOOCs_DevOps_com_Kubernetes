@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>StatefulSets, Volumes Persistentes e Jobs</title><style>body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:900px;margin:40px auto;padding:20px;background:#faf8f5}h1,h2,h3{color:#2c3e50}h1{border-bottom:3px solid #3498db;padding-bottom:10px}h2{border-bottom:1px solid #bdc3c7;padding-bottom:5px;margin-top:30px}pre{background:#2c3e50;color:#ecf0f1;padding:15px;border-radius:8px;overflow-x:auto;font-size:14px}code{font-family:'Courier New',Courier,monospace}p code,li code{background:#e8e8e8;color:#c0392b;padding:2px 4px;border-radius:4px}blockquote{border-left:4px solid #3498db;margin:16px 0;padding:8px 16px;background:#eef6fb}</style></head><body>
+<h1>StatefulSets, Volumes Persistentes e Jobs</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Persistir dados com PV, PVC e StorageClass</li>
+<li>Entender StatefulSets e Headless Services</li>
+<li>Executar tarefas finitas com Jobs</li>
+</ul>
+<p>Até aqui, os Pods podiam ser substituídos sem grande preocupação. Isso funciona bem para aplicações sem estado, mas não para bancos de dados, filas, caches persistentes e serviços que precisam de identidade estável. Nesses casos, precisamos combinar armazenamento persistente, <code>StatefulSet</code> e, em alguns cenários, <code>Job</code>.</p>
+<h2>Volumes persistentes</h2>
+<p><code>PersistentVolume</code> (PV) representa uma unidade de armazenamento disponível no cluster. <code>PersistentVolumeClaim</code> (PVC) é o pedido feito pela aplicação. <code>StorageClass</code> descreve como o armazenamento pode ser provisionado dinamicamente.</p>
+<pre><code class="language-yaml">
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+</code></pre>
+<p>Um Pod ou Deployment pode montar esse PVC:</p>
+<pre><code class="language-yaml">
+volumeMounts:
+  - name: data
+    mountPath: /usr/share/nginx/html
+volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: app-data
+</code></pre>
+<h2>StatefulSet</h2>
+<p><code>StatefulSet</code> é o controlador indicado quando a aplicação precisa de identidade estável. Os Pods são criados com nomes previsíveis, como <code>postgres-0</code>, <code>postgres-1</code> e <code>postgres-2</code>. Um StatefulSet normalmente trabalha com um Headless Service para oferecer nomes DNS individuais para cada Pod.</p>
+<pre><code class="language-yaml">
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+</code></pre>
+<h2>Jobs</h2>
+<p><code>Job</code> executa uma tarefa finita até a conclusão. Ele é útil para migrações, cargas iniciais, scripts administrativos e processamentos pontuais. Use Deployment para aplicações sem estado, StatefulSet quando identidade e volume por réplica forem importantes, e Job para tarefas que terminam.</p>
+</body></html>

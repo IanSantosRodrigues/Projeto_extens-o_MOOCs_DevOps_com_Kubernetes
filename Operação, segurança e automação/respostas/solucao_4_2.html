@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 4.2 - O projeto, passo 21</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 4.2 - O projeto, passo 21</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Criar Rota Healthz no Backend</strong>: Crie uma variável global <code>isHealthy = true</code>. Adicione uma rota <code>GET /healthz</code> que retorne código <code>200 OK</code> se <code>isHealthy</code> for verdadeiro, ou <code>500 Internal Server Error</code> se for falso.</li>
+<li><strong>Simulação de Falha</strong>: Crie um botão no Frontend (ex: 'Quebrar App') e faça-o acionar uma rota no Backend que altera <code>isHealthy</code> para <code>false</code>.</li>
+<li><strong>Configurar as Probes</strong>: No manifesto de Deployment da aplicação, adicione <code>readinessProbe</code> e <code>livenessProbe</code> apontando para o <em>path</em> <code>/healthz</code> na porta do seu servidor web.</li>
+<li><strong>Verificação</strong>: Implante as mudanças. Ao clicar no botão 'Quebrar App', a aplicação começará a retornar erro 500 no <code>/healthz</code>. O Kubernetes (kubelet) notará a falha através da <code>livenessProbe</code> e forçará a reinicialização (restart) do <em>pod</em>, restaurando a saúde do serviço.</li>
+</ol>
+    </div>
+</body>
+</html>

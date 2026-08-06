@@ -1,0 +1,144 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{GitOps}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Comparar GitOps a outros métodos de implantação (\textit{deployment})
+    \item Comparar a implantação tradicional baseada em \textit{push} (\textit{push deployment}) com a implantação baseada em \textit{pull} (\textit{pull deployment})
+    \item Implementar GitOps no seu cluster Kubernetes com o ArgoCD
+\end{itemize}
+
+Um pipeline de implantação simples padrão inclui as seguintes etapas:
+\begin{enumerate}
+    \item O desenvolvedor envia (\textit{pushes}) o código modificado para um repositório, como o GitHub.
+    \item Isso aciona um serviço de CI/CD, como o GitHub Actions, para iniciar a execução.
+    \item O serviço de CI/CD executa os testes, compila uma imagem, envia a imagem para um registro e implanta a nova imagem, por exemplo, no Kubernetes.
+\end{enumerate}
+
+Isso é chamado de \textbf{implantação baseada em push} (\textit{push deployment}). O nome é descritivo, pois tudo é "empurrado" (\textit{pushed}) para a frente pelo passo anterior. Existem alguns desafios com a abordagem de \textit{push}. Por exemplo, se tivermos um cluster Kubernetes que não está disponível para conexões externas, ou seja, o cluster na sua máquina local ou qualquer cluster ao qual não queremos dar acesso a terceiros. Nesses casos, não é possível fazer com que o CI/CD envie a atualização para o cluster.
+
+Na \textbf{configuração de pull} (\textit{pull configuration}), o processo é revertido. O cluster, rodando em qualquer lugar, \textbf{busca} (\textit{pull}) a nova imagem e a implantação ocorre automaticamente. A nova imagem ainda será testada e compilada pelo CI/CD. Nós simplesmente aliviamos o CI/CD do fardo da implantação e transferimos a responsabilidade de "buscar" os dados (\textit{pulling}) para um sistema separado.
+
+\subsection*{\color{secondary}Watchtower}
+Se você concluiu o curso de DevOps com Docker, deve ter ouvido falar sobre o Watchtower, que nos permitiu transformar os "pushes" finais do pipeline de implantação em "pulls" quando rodamos serviços com docker-compose.
+
+\textbf{GitOps} trata-se exatamente desta inversão, promovendo boas práticas para o lado operacional. Isto é alcançado mantendo o estado do cluster em um repositório Git, gerenciando, portanto, não só implantações de aplicações, mas também todas as mudanças de infraestrutura no cluster. Isso exigirá configuração adicional e uma mudança de mentalidade, superando a tradição de configurações convencionais em servidores. Mas, quando chegarmos a esse ponto, o GitOps será o último prego no caixão do gerenciamento imperativo de clusters.
+
+O ArgoCD é atualmente a principal ferramenta para GitOps em Kubernetes, e é a nossa escolha para este módulo. No fim das contas, nosso fluxo de trabalho deve ficar assim:
+\begin{enumerate}
+    \item O desenvolvedor executa \textit{git push} com código ou configurações modificadas.
+    \item O serviço de CI/CD (GitHub Actions, no nosso caso) inicia a execução.
+    \item O serviço de CI/CD compila e faz o \textit{push} da nova imagem \textbf{e} confirma a alteração na ramificação principal (\textit{main}, no nosso caso).
+    \item O ArgoCD obterá o estado descrito na \textit{branch} de release (ramo de liberação) e configurará esse estado no nosso cluster.
+\end{enumerate}
+
+Vamos iniciar instalando o ArgoCD:
+\begin{lstlisting}[language=bash]
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+\end{lstlisting}
+
+Agora o ArgoCD está sendo executado no nosso cluster. Ainda precisamos abrir o acesso a ele. Existem várias opções; usaremos um LoadBalancer:
+\begin{lstlisting}[language=bash]
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+\end{lstlisting}
+
+A senha inicial para a conta \textit{admin} é gerada automaticamente e armazenada em texto claro no campo \texttt{password} na \textit{secret} chamada \texttt{argocd-initial-admin-secret}. Decodificamos a string em base64 com este comando:
+\begin{lstlisting}[language=bash]
+kubectl get -n argocd secrets argocd-initial-admin-secret -o yaml
+\end{lstlisting}
+
+Quando sincronizarmos novamente as mudanças no ArgoCD, um novo pod funcional iniciará e nosso app passará a rodar!
+
+Se mudarmos a política de sincronização de manual para \textbf{automática} na interface do Argo, qualquer mudança no GitHub será aplicada automaticamente no cluster. Teste aumentar o número de réplicas no \textit{deployment.yaml} e faça o commit; o ArgoCD irá sincronizar as mudanças por conta própria (frequência de checagem a cada 180 segundos) e escalar a aplicação.
+
+O repositório Git (o \textit{source}) torna-se a única fonte da verdade, contendo o \textit{deployment.yaml}, \textit{service.yaml} e o \textit{kustomization.yaml}. Qualquer edição à imagem da aplicação passará primeiramente pelas ferramentas do Kustomize e pelo pipeline no GitHub Action.
+
+Para que isso funcione, também é necessário permitir permissões de gravação de repositório (\textit{write permissions}) na configuração de fluxo de trabalho (\textit{workflow}) do GitHub. E agora temos uma integração GitOps 100\% automatizada!
+
+Os benefícios da implantação com GitOps incluem:
+\begin{itemize}
+    \item \textbf{Melhor Segurança:} Ninguém precisa de acesso ao cluster, nem os serviços de CI/CD. Não há necessidade de compartilhar chaves com terceiros; todos apenas confirmam (\textit{commit}) o código no Git.
+    \item \textbf{Maior Transparência:} Todo o escopo é definido no GitHub. Se uma pessoa nova entrar no time, ela só precisará verificar o repositório, não sendo necessário repassar conhecimentos ocultos.
+    \item \textbf{Maior Rastreabilidade:} Todas as mudanças no cluster têm controle de versão. É fácil saber quem fez as mudanças e como ficou o estado.
+    \item \textbf{Redução de Risco:} Caso ocorra algum erro e as coisas quebrem, usar um comando \texttt{git revert} é o suficiente para voltar à normalidade do cluster.
+    \item \textbf{Portabilidade:} Ao mudar de provedor de Nuvem, basta montar um novo cluster e apontá-lo para o mesmo repositório - pronto, seu cluster está implementado novamente.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.7: Passos de bebê para GitOps]
+Mova o aplicativo \textit{Log output} para usar o GitOps para que, ao fazer o \textit{commit} no repositório, o aplicativo seja atualizado automaticamente.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.8: O Projeto, etapa 24]
+Mova O Projeto (\textit{The Project}) para usar o GitOps de maneira que, após um \textit{commit}, a aplicação seja atualizada automaticamente. Neste exercício, basta que a \textit{branch main} (ramificação principal) faça o \textit{deploy} no cluster.
+\end{tcolorbox}
+
+\section*{\color{primary}Múltiplos ambientes (More environments)}
+
+Se um aplicativo possuir muitos ambientes, como produção (\textit{production}), teste (\textit{staging}) e desenvolvimento, defini-los de forma direta envolve muito copia-e-cola (\textit{copy-paste}). Com o uso do Kustomize, a recomendação é definir uma "base" (\textit{base}) comum para todos e em seguida utilizar as "camadas" (\textit{overlays}) relativas a cada ambiente, onde apenas as partes diferentes estarão configuradas.
+
+As partes fixas permanecem em \texttt{base}, já em \texttt{overlays/prod/deployment.yaml} alteramos por exemplo, as réplicas.
+
+\section*{\color{primary}Definindo o todo com YAML (Defining the whole with yaml)}
+
+Até agora usamos a UI do ArgoCD para definir \textit{applications}. Porém, isso também pode ser feito de modo declarativo e definindo uma configuração como um recurso do Kubernetes.
+
+Depois de declarar tudo num único YAML, apenas integre via \texttt{kubectl apply -n argocd -f application.yaml}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.9: O projeto, etapa 25]
+Melhore as definições do seu Projeto da seguinte forma:
+\begin{itemize}
+    \item Crie dois ambientes separados (\textit{production} e \textit{staging}) em \textit{namespaces} diferentes.
+    \item Cada commit na ramificação \texttt{main} deve fazer o \textit{deploy} no \textit{staging}.
+    \item Cada commit \textbf{com tag} deve fazer o \textit{deploy} no ambiente \textit{production}.
+    \item Em staging, o \textit{broadcaster} apenas registra mensagens (logs); não deverá enviá-las para serviços externos.
+    \item Em staging, o banco de dados não recebe \textit{backups}.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.10: O projeto, o grand finale]
+Finalize a infraestrutura do seu projeto, fazendo com que sejam utilizados repositórios totalmente distintos: um para os códigos-fonte da aplicação e outro unicamente para as configurações de \textit{deployment}.
+\end{tcolorbox}
+
+\end{document}

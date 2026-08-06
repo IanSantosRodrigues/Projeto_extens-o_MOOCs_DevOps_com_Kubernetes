@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Monitoramento de Aplicações no Kubernetes</title><style>body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:900px;margin:40px auto;padding:20px;background:#faf8f5}h1,h2,h3{color:#2c3e50}h1{border-bottom:3px solid #3498db;padding-bottom:10px}h2{border-bottom:1px solid #bdc3c7;padding-bottom:5px;margin-top:30px}pre{background:#2c3e50;color:#ecf0f1;padding:15px;border-radius:8px;overflow-x:auto;font-size:14px}code{font-family:'Courier New',Courier,monospace}p code,li code{background:#e8e8e8;color:#c0392b;padding:2px 4px;border-radius:4px}blockquote{border-left:4px solid #3498db;margin:16px 0;padding:8px 16px;background:#eef6fb}</style></head><body>
+<h1>Monitoramento de Aplicações no Kubernetes</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Entender por que monitorar aplicações publicadas</li>
+<li>Coletar métricas com Prometheus e visualizar com Grafana</li>
+<li>Relacionar métricas com escalabilidade e diagnóstico</li>
+</ul>
+<p>Publicar uma aplicação não termina quando o <code>kubectl apply</code> funciona. Depois que ela está em execução, precisamos responder perguntas simples e importantes: a aplicação está saudável? O consumo de CPU subiu? Os Pods estão reiniciando? O banco está respondendo? O tráfego aumentou?</p>
+<p>Monitoramento é a prática de coletar, armazenar e visualizar sinais sobre o sistema. No Kubernetes, esses sinais vêm dos próprios recursos do cluster, dos contêineres e da aplicação.</p>
+<h2>Métricas do cluster</h2>
+<p>O Metrics Server fornece métricas básicas para comandos como:</p>
+<pre><code class="language-bash">
+kubectl top pods
+kubectl top nodes
+</code></pre>
+<p>Ele é útil para uma visão rápida e também serve de base para recursos como HPA em muitos ambientes. Porém, para análises históricas e painéis completos, normalmente usamos Prometheus e Grafana.</p>
+<h2>Prometheus e Grafana</h2>
+<p>Prometheus coleta métricas periodicamente a partir de endpoints HTTP. Grafana permite montar painéis para visualizar essas métricas. Em ambientes Kubernetes, uma instalação comum é feita com Helm usando o chart <code>kube-prometheus-stack</code>.</p>
+<pre><code class="language-bash">
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+</code></pre>
+<h2>Métricas úteis para publicação</h2>
+<p>Durante a construção e publicação de aplicações, algumas métricas são especialmente importantes: reinícios de contêineres, quantidade de Pods prontos, consumo de CPU e memória, latência, taxa de erro e disponibilidade de banco de dados. Essas métricas ajudam a decidir se uma versão pode continuar em produção ou se precisa ser revertida.</p>
+<h2>Boas práticas</h2>
+<p>Configure endpoints de saúde, use readiness e liveness probes, acompanhe reinícios e mantenha dashboards simples. Um painel bom não é o que mostra tudo; é o que ajuda a perceber rapidamente quando algo importante saiu do normal.</p>
+</body></html>

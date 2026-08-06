@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.7 - Faça o deploy para o serverless}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Ajuste o YAML do Ping-pong}: Altere o atributo \texttt{kind: Deployment} para \texttt{kind: Service} (do \texttt{apiVersion: serving.knative.dev/v1}). Especifique o template da imagem dentro dessa estrutura. O Knative cuidará automaticamente dos \textit{Pods}, autoescalonamento e tráfego.
+2. \textbf{Ajustar as Conexões do Cluster}: O \textit{Log output}, que dependia do ping-pong, deve ser atualizado para contatar o serviço usando o Nome de Domínio Totalmente Qualificado do Kubernetes (\textit{FQDN}), por exemplo: \texttt{http://pingpong.default.svc.cluster.local}.
+3. \textbf{Criação do HTTPRoute (Opcional)}: Se quiser testar chamadas originadas fora do cluster, crie o filtro \texttt{URLRewrite} apontando o \texttt{hostname} para a URL dinâmica do Knative. Por exemplo, substituindo a raiz usando \texttt{replacePrefixMatch}. 
+4. \textbf{Apply}: Faça o deploy dessa configuração; ao deixar o serviço de Log sem requisitar o Ping-pong, ele escalará o ping-pong para zero \textit{pods}. No momento em que uma chamada HTTP for realizada, ele rapidamente criará um novo.
+\end{tcolorbox}
+
+\end{document}

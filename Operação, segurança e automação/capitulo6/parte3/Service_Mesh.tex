@@ -1,0 +1,295 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{Malha de Serviço (\textit{Service Mesh})}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Configurar uma malha de serviço (\textit{service mesh}) e usá-la para monitorar o tráfego de rede
+\end{itemize}
+
+Você ouvirá com bastante frequência sobre um conceito chamado \textit{Service Mesh} (Malha de Serviço). As malhas de serviço são animais bastante complexos que fornecem um amplo conjunto de recursos para as aplicações. Durante os capítulos anteriores, implementamos algumas funcionalidades que as malhas de serviço ofereceriam prontamente (\textit{out of the box}).
+
+No contexto da arquitetura de microsserviços, uma malha de serviço é de fato uma ferramenta poderosa que pode agilizar e aprimorar a comunicação entre os serviços. Ela fornece capacidades robustas, como:
+\begin{itemize}
+    \item proteger a comunicação
+    \item gerenciar o tráfego, e
+    \item monitorar o tráfego enviando logs e métricas para ferramentas de observabilidade, como o Prometheus.
+\end{itemize}
+
+Ao usar uma malha de serviço como o Istio, muitas das funcionalidades que foram implementadas manualmente em capítulos anteriores podem ser automatizadas e otimizadas, reduzindo potencialmente a complexidade e a sobrecarga.
+
+O \textbf{Istio} é uma popular malha de serviço de código aberto que oferece recursos avançados para gerenciar as interações de serviço a serviço. Ele fornece segurança, controle e observabilidade em todos os microsserviços sem exigir alterações no código da aplicação.
+
+Recentemente, o Istio introduziu um novo recurso chamado \textit{Ambient Mode}, que visa simplificar a implantação e o gerenciamento da malha de serviço. O Ambient Mode reduz a complexidade e a sobrecarga associadas aos tradicionais proxies sidecar adotando uma arquitetura sem sidecars (\textit{sidecar-less}). Este modo permite uma integração mais fácil e reduz o consumo de recursos, tornando-o mais eficiente e escalável para ambientes nativos da nuvem modernos.
+
+Nos próximos exercícios, você se familiarizará com o Istio e seu \textit{ambient mode}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício: 5.2. Primeiros passos com a malha de serviço Istio]
+Leia agora a documentação oficial sobre Istio, \textit{dataplane-modes} e \textit{ambient overview}.
+Instale agora o Istio CLI através da documentação e configure o Istio no seu cluster k3d seguindo os passos de pré-requisitos.
+Faça o \textit{deploy} da aplicação de exemplo (Sample app) e siga os passos até o "Clean up" (limpeza).
+
+\textbf{Nota}: é necessário ter o Prometheus instalado no seu cluster. Muito provavelmente você precisará configurar a URL do Prometheus no arquivo \textit{kiali.yaml} da seguinte forma:
+
+\begin{lstlisting}[language=bash]
+prometheus:
+  enabled: true
+  url: http://prom-prometheus-server.monitoring:80
+\end{lstlisting}
+\end{tcolorbox}
+
+Explorar a aplicação de exemplo do Istio mostra bem alguns dos recursos disponíveis, mas não esclarece exatamente como configurar o Istio Ambient para a sua própria aplicação. Portanto, vamos analisar um exemplo muito simples.
+
+Vamos agora implantar uma aplicação \textit{hello world} no \textit{namespace} padrão onde o Istio já está habilitado. O Deployment e o Service são definidos da seguinte forma:
+
+\begin{lstlisting}[language=bash]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+        - name: seedimage
+          image: mluukkai/hello:1
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: hello
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+\end{lstlisting}
+
+A definição do Gateway e do HTTPRoute é direta:
+
+\begin{lstlisting}[language=bash]
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: hello-gateway
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: Same
+
+---
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello
+spec:
+  parentRefs:
+  - name: hello-gateway
+  rules:
+  - matches:
+    - path:
+        type: Exact
+        value: /
+    backendRefs:
+    - name: hello-svc
+      port: 80
+\end{lstlisting}
+
+Após gerarmos algum tráfego para a aplicação, já podemos visualizá-lo com o Kiali.
+
+Vamos agora alterar nossa configuração para uma implantação canário (\textit{canary deployment}). Definimos o \textit{deployment} e o \textit{service} da versão antiga e da nova versão (veja os arquivos de exemplo para \texttt{hello-dep-v1}, \texttt{hello-svc-v1}, \texttt{hello-dep-v2}, \texttt{hello-svc-v2}).
+
+Observe como o rótulo (\textit{label}) \texttt{version} é usado para distinguir entre as versões! Agora podemos simplesmente alterar o recurso HTTPRoute para dividir o tráfego entre os serviços:
+
+\begin{lstlisting}[language=bash]
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello
+spec:
+  parentRefs:
+  - name: hello-gateway
+  rules:
+  - matches:
+    - path:
+        type: Exact
+        value: /
+    backendRefs:
+    - name: hello-svc-v1
+      port: 80
+      weight: 75
+    - name: hello-svc-v2
+      port: 80
+      weight: 25
+\end{lstlisting}
+
+O Kiali visualiza isso muito bem e, após gerar algum tráfego, podemos verificar a proporção que cada \textit{pod} recebe.
+
+Existem algumas operações interessantes de gerenciamento de tráfego que ainda não estão disponíveis com as novas ferramentas e exigem o uso do antigo recurso VirtualService. Felizmente, podemos usar VirtualServices se mudarmos do Gateway API para o recurso \textbf{Istio Ingress Gateway}.
+
+Primeiro, devemos instalar o Ingress Gateway seguindo a documentação. Em seguida, podemos substituir o Kubernetes Gateway e HTTPRoute pelos recursos Istio Gateway e VirtualService:
+
+\begin{lstlisting}[language=bash]
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: hello-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+
+---
+
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: helloworld
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - hello-gateway
+  http:
+  - match:
+    - uri:
+        exact: /
+    route:
+    - destination:
+        host: hello-svc-v1
+        port:
+          number: 80
+      weight: 50
+    - destination:
+        host: hello-svc-v2
+        port:
+          number: 80
+      weight: 50
+\end{lstlisting}
+
+Observe que o Gateway agora tem a versão de API \texttt{networking.istio.io/v1}, enquanto o Gateway Kubernetes anterior tinha a versão de API \texttt{gateway.networking.k8s.io/v1}. Portanto, apesar de ambos terem o tipo \texttt{Gateway}, esses são recursos completamente diferentes e de forma alguma compatíveis entre si.
+
+Podemos acessar nosso aplicativo fazendo um \textit{port-forward} através do \textit{ingress-gateway} do Istio:
+
+\begin{lstlisting}[language=bash]
+kubectl port-forward svc/istio-ingressgateway 8080:80 -n istio-ingress
+\end{lstlisting}
+
+A definição do VirtualService é bastante semelhante à do HTTPRoute, apenas a sintaxe é um pouco diferente. Um recurso interessante disponível ao usar o VirtualService é a injeção de falhas (\textit{fault injection}), que podemos usar para simular vários tipos de condições de erro. A configuração a seguir define que há 50\% de chance de a resposta ser atrasada em 3 segundos e 25\% de chance de a requisição ser abortada com um erro HTTP 500:
+
+\begin{lstlisting}[language=bash]
+    fault:
+      delay:
+        percentage:
+          value: 50
+        fixedDelay: 3s
+      abort:
+        httpStatus: 500
+        percentage:
+          value: 25
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício: 5.3. Log app, a Edição Service Mesh]
+Implemente a aplicação Log na malha de serviço (\textit{service mesh}). Estenda a aplicação com um novo serviço \textit{greeter} que responda a uma requisição HTTP GET com uma saudação (como \textit{hello}). A aplicação \textit{log output} deve usar o serviço \textit{greeter} e exibir a saudação juntamente com o restante da saída.
+
+Assim que a configuração básica estiver funcionando, faça o \textit{deploy} de duas versões do \textit{greeter} e divida o tráfego de modo que uma versão receba 75\% e a outra o restante.
+
+Dicas:
+\begin{itemize}
+    \item Nossa configuração é muito semelhante à usada na aplicação de exemplo do Istio.
+    \item Como você verá, a divisão de tráfego é feita com um objeto HTTPRoute, onde você precisa definir um serviço (o \textit{greeter-svc}) como um \texttt{parentRefs}.
+    \item Você precisará de três serviços separados para o \textit{greeter}: o \textit{greeter-svc} ao qual você anexa o HTTPRoute, que apontará para o \texttt{greeter-svc-1} e \texttt{greeter-svc-2}.
+\end{itemize}
+
+Use o Kiali para garantir que o tráfego seja dividido corretamente entre os \textit{greeters}.
+\end{tcolorbox}
+
+\section*{\color{primary}Mais uma coisa... init containers e sidecars}
+
+Por debaixo dos panos, muitas implementações de malha de serviço dependem fortemente de contêineres de inicialização (\textit{init containers}) e contêineres secundários (\textit{sidecar containers}) para realizar a sua mágica. Para o Istio, a arquitetura baseada em \textit{sidecars} costumava ser a única opção antes da introdução do \textit{ambient mode}, que utilizamos em exercícios anteriores. Embora os \textit{sidecars} não sejam mais a única opção para implementar uma malha de serviço, eles permanecem um conceito útil com diversas aplicações. Vamos dar uma olhada mais de perto nesses conceitos muito importantes.
+
+Um \textit{pod} pode ter qualquer número de contêineres de inicialização (\textit{init containers}), que são contêineres que rodam antes de os contêineres principais do \textit{pod} iniciarem. Existem muitos usos para eles, como por exemplo:
+
+\begin{itemize}
+    \item gerar ou modificar arquivos de configuração, buscar dados ou configurações de fontes remotas ou realizar qualquer pré-processamento necessário \textit{antes} do início da aplicação principal
+    \item aguardar que outros serviços, bancos de dados ou componentes de infraestrutura estejam operacionais \textit{antes} do início da aplicação principal. Isso garante que os contêineres principais iniciem apenas quando todas as dependências estiverem prontas
+    \item instalar ou configurar utilitários, cadeias de ferramentas ou software exigidos pela aplicação principal durante a execução, mas não incluídos na imagem principal, mantendo a imagem principal leve e otimizada
+\end{itemize}
+
+Os \textit{sidecars} são contêineres secundários que rodam junto ao contêiner da aplicação principal dentro do mesmo \textit{Pod}. Esses contêineres são usados para aprimorar ou estender a funcionalidade do contêiner da aplicação principal, fornecendo serviços ou funcionalidades adicionais como registro (\textit{logging}), monitoramento, segurança ou sincronização de dados, sem alterar diretamente o código da aplicação principal.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício: 5.4. Wikipedia com init e sidecar]
+Escreva um aplicativo que sirva páginas da Wikipedia. O aplicativo deve conter:
+
+\begin{itemize}
+    \item O contêiner principal baseado na imagem \textit{nginx}, que simplesmente sirva qualquer conteúdo que esteja no diretório público \textit{www}.
+    \item Um \textit{init container} que execute um \texttt{curl} na página \url{https://en.wikipedia.org/wiki/Kubernetes} e salve o conteúdo no diretório público \textit{www} para o contêiner principal.
+    \item Um \textit{sidecar container} que aguarde um tempo aleatório entre 5 e 15 minutos, execute um \texttt{curl} em uma página aleatória da Wikipedia usando a URL \url{https://en.wikipedia.org/wiki/Special:Random} e salve o conteúdo no diretório público \textit{www} para o contêiner principal.
+\end{itemize}
+\end{tcolorbox}
+
+\end{document}

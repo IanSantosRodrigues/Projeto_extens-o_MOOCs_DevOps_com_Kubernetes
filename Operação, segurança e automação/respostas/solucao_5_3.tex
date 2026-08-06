@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.3 - Log app, a Edição Service Mesh}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Criar a Aplicação Greeter}: Escreva uma micro-API (greeter) que retorna 'Hello'. Construa duas versões da imagem Docker (v1 e v2) com uma leve diferença no retorno para diferencia-las.
+2. \textbf{Deployments}: Crie dois \texttt{Deployments} no cluster, um usando a v1 e outro a v2, com labels \texttt{version: v1} e \texttt{version: v2}.
+3. \textbf{VirtualService/HTTPRoute}: Em vez de usar balanceamento Kubernetes tradicional, crie um recurso \texttt{VirtualService} do Istio acoplado a um \texttt{Gateway} ou um recurso \texttt{HTTPRoute} apontando para os serviços \textit{greeter-svc-1} e \textit{greeter-svc-2}.
+4. \textbf{Regras de Pesos (Weights)}: Na definição das rotas, atribua \texttt{weight: 75} para o destino v1 e \texttt{weight: 25} para o destino v2. O Log app precisará chamar apenas a rota virtual. Verifique a distribuição no Kiali.
+\end{tcolorbox}
+
+\end{document}

@@ -1,0 +1,30 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.1: Readiness probe}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.1: Readiness probe]
+Crie uma \texttt{ReadinessProbe} para a aplicação Ping-pong. Ela deve estar pronta quando tiver uma conexão com o banco de dados. Além disso, crie outra \texttt{ReadinessProbe} para a aplicação Log output. Ela deve estar pronta quando puder receber dados da aplicação Ping-pong. Teste se a configuração funciona aplicando todos os manifestos do cluster, \textit{exceto} o statefulset do banco de dados. O status READY dos pods deve refletir a falta do banco de dados antes dele ficar disponível.
+\end{tcolorbox}
+
+\end{document}

@@ -1,0 +1,32 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.5: O projeto, passo 22}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.5: O projeto, passo 22]
+Aprimore a nossa aplicação de tarefas (\textit{todos}). O sistema poderia ter um campo 'Concluído' (\textit{Done}) para tarefas que já foram feitas.
+
+Para implementar isso, o backend deve suportar uma requisição HTTP PUT para a rota \texttt{/todos/<id>} que marque a tarefa com o ID correspondente como concluída. Atualize também a interface de usuário para permitir essa interação.
+\end{tcolorbox}
+
+\end{document}

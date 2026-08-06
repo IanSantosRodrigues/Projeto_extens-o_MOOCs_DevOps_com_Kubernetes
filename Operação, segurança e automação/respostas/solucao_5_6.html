@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 5.6 - Testando Serverless</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 5.6 - Testando Serverless</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Cluster k3d Personalizado</strong>: Remova o traefik padrão durante a criação do cluster com a <em>flag</em> apropriada: <code>k3d cluster create --k3s-arg "--disable=traefik@server:0"</code>.</li>
+<li><strong>Instalação do Knative Serving</strong>: Aplique os manifestos do Core do Knative e CRDs. </li>
+<li><strong>Camada de Rede (Kourier)</strong>: Instale os manifestos de rede focados em Kourier e aplique um patch para que o Knative o defina como <em>Ingress</em> padrão: <code>kubectl patch configmap/config-network --namespace knative-serving --type merge --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'</code>.</li>
+<li><strong>Magic DNS</strong>: Aplique o Job de configuração para o <code>sslip.io</code>, permitindo que os domínios internos possuam rotas válidas para os testes de <em>curl</em> locais.</li>
+<li><strong>Troubleshooting</strong>: Inspecione o <code>webhook</code> ou <code>controller</code> com <code>kubectl logs -n knative-serving</code> caso fiquem em estado de falha (dependendo dos recursos da máquina, aguardar muitas vezes é a solução).</li>
+<li><strong>Testes Finais</strong>: Crie um Knative <code>Service</code> genérico, acompanhe os pods nascendo a partir do zero a cada requisição (Scale to Zero) e explore como fazer as transições de revisões via YAML.</li>
+</ol>
+    </div>
+</body>
+</html>

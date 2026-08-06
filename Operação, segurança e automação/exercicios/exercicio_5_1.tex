@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 5.1: Faça você mesmo um CRD e Controller}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.1: Faça você mesmo um CRD e Controller]
+Neste exercício, precisamos criar um recurso do zero. Vamos dar o nome de \textit{DummySite} a um recurso que extraia automaticamente o HTML de uma página da web e crie uma cópia do site.
+
+- Crie uma \textit{CustomResourceDefinition} (CRD) definindo a propriedade \texttt{website\_url}.
+
+- Desenvolva um controlador (\textit{controller}) personalizado que obterá e analisará os eventos de todos os \textit{DummySites} criados a partir das APIS REST do Kubernetes.
+
+- Faça o controlador gerar e preencher dinamicamente as requisições do tipo \textit{Job} de que seu código precisará para rodar o scraping e concretizar a clonagem da página.
+\end{tcolorbox}
+
+\end{document}

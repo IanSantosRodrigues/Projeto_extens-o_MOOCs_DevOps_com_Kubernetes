@@ -1,0 +1,40 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 4.9: O projeto, etapa 25}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 4.9: O projeto, etapa 25]
+Melhore as definições de \textit{deployment} do seu Projeto da seguinte forma com Kustomize e ArgoCD:
+
+- Crie dois ambientes separados (\textit{production} e \textit{staging}) e os instancie em \textit{namespaces} diferentes no cluster.
+
+- Cada commit aprovado na ramificação \texttt{main} deve acionar automaticamente o \textit{deploy} no ambiente de \textit{staging}.
+
+- Cada commit que possuir uma \textbf{tag} de versão (\textit{release}) deve acionar o \textit{deploy} no ambiente de \textit{production}.
+
+- No ambiente de \textit{staging}, o \textit{broadcaster} apenas deve registrar as mensagens em formato de logs, e não deverá enviá-las de verdade para os serviços de chat externos.
+
+- No ambiente de \textit{staging}, não configure ou execute backups do banco de dados.
+\end{tcolorbox}
+
+\end{document}

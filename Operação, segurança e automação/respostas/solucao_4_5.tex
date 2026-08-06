@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.5 - O projeto, passo 22}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Modificação no Banco de Dados}: Adicione uma coluna/campo booleano \texttt{done} (concluído) na sua tabela ou esquema de tarefas (Todos), com valor padrão \texttt{false}.
+2. \textbf{Atualizar o Backend}: Crie o endpoint \texttt{PUT /todos/:id} no backend. O controlador dessa rota deve buscar a tarefa correspondente no banco de dados e atualizar o valor de \texttt{done} para \texttt{true}.
+3. \textbf{Atualizar o Frontend}: Na interface de usuário, adicione um botão 'Concluído' ou um \textit{checkbox} ao lado de cada tarefa listada. Ao ser clicado, o botão envia a requisição HTTP PUT para a nova rota da API.
+4. \textbf{Implantação}: Atualize as imagens Docker, altere as tags no \textit{Deployment} e aplique no Kubernetes. Valide a funcionalidade criando uma tarefa e depois marcando-a como concluída.
+\end{tcolorbox}
+
+\end{document}

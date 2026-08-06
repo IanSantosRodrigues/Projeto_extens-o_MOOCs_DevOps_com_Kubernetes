@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.5 - Comparação de Plataformas}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo (Resolução Teórica)
+
+Crie uma lista simples de \textit{bullet points} comparando, por exemplo, o \textbf{Rancher} contra o \textbf{OpenShift}.
+
+*   \textbf{OpenShift (Red Hat)}: Projetado para o mundo corporativo (Enterprise). É altamente opinativo, exigindo padrões de segurança rigorosos (contêineres rootless obrigatórios). Contém CI/CD e Registry nativos profundamente integrados, mas possui alto custo de licenciamento.
+\textit{   \textbf{Rancher (SUSE)}: Foco total no open-source e em gerenciamento multi-cluster. Extremamente leve (é possível usar k3s e RKE em cima de qualquer infraestrutura) e evita }vendor lock-in* massivos. 
+\textit{   \textbf{Veredito de Exemplo}: O }Rancher* é "melhor" para nossa equipe fictícia porque priorizamos uma infraestrutura leve, sem dependência pesada de um ecossistema comercial rígido, permitindo a transição livre entre nuvens públicas e servidores internos mantendo as ferramentas CNCF padrão em 100\% dos ambientes.
+\end{tcolorbox}
+
+\end{document}

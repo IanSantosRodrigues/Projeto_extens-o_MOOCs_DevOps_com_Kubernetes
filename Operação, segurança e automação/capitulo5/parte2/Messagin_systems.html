@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas de Mensagens (Messaging Systems)</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; margin-top: 30px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+        code { font-family: 'Courier New', Courier, monospace; }
+        p code, li code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        a { color: #2980b9; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<h1>Sistemas de Mensagens (<em>Messaging Systems</em>)</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Criar uma arquitetura complexa de microsserviços usando NATS como sistema de mensagens</li>
+</ul>
+<p>As <a href="https://en.wikipedia.org/wiki/Message_queue">filas de mensagens</a> são um método de comunicação entre serviços. Elas têm uma ampla variedade de casos de uso e são úteis quando se deseja escalar aplicações. Diversos serviços baseados em APIs REST HTTP que desejam se comunicar entre si exigem que um conheça o endereço do outro. Em contrapartida, ao usar filas de mensagens, as mensagens são enviadas e recebidas a partir da própria fila.</p>
+<p>Nesta seção, usaremos um sistema de mensagens chamado <a href="https://docs.nats.io/">NATS</a> para explorar os benefícios da mensageria. Antes de começarmos, vamos revisar os conceitos básicos do NATS.</p>
+<p>No NATS, as aplicações se comunicam enviando e recebendo mensagens. Estas mensagens são endereçadas e identificadas por <a href="https://docs.nats.io/nats-concepts/subjects">assuntos</a> (<em>subjects</em>). O emissor <em>publica</em> a mensagem com um assunto. Os receptores <em>assinam</em> os assuntos para receber as mensagens publicadas. No modelo padrão <a href="https://docs.nats.io/nats-concepts/core-nats/pubsub">publicação-assinatura</a> (<em>publish-subscribe</em>), todos os assinantes do assunto recebem a mensagem publicada. Também é possível usar um modelo de <a href="https://docs.nats.io/nats-concepts/core-nats/queue">fila</a> (<em>queue</em>), no qual cada mensagem publicada é entregue a apenas <strong>um</strong> assinante.</p>
+<p>O NATS oferece diferentes semânticas de entrega de mensagens ou modos de operação. A funcionalidade básica fornecida pelo <a href="https://docs.nats.io/nats-concepts/core-nats">Core NATS</a> é o envio da mensagem <em>no máximo uma vez</em>: se não houver assinantes ouvindo o assunto (nenhuma correspondência de assunto) ou se não estiverem ativos no momento em que a mensagem é enviada, a mensagem não será recebida. Utilizando a funcionalidade <a href="https://docs.nats.io/nats-concepts/jetstream">Jetstream</a>, também é possível alcançar a entrega de mensagens <em>pelo menos uma vez</em> ou <em>exatamente uma vez</em>, com persistência.</p>
+<p>Com isso em mente, podemos projetar nossa primeira aplicação que usa mensageria para se comunicar.</p>
+<p>Temos um conjunto de dados de 100.000 objetos JSON que exigem um processamento pesado, e depois precisamos salvar os dados processados. Infelizmente, processar um único objeto JSON leva tanto tempo que processar todos os dados exigiria horas de trabalho. Para resolver isso, dividi a aplicação em serviços menores que podem ser escalados individualmente.</p>
+<p>A <a href="https://github.com/kubernetes-hy/material-example/tree/master/app11">aplicação</a> está dividida em 3 partes:</p>
+<ul>
+<li>Fetcher: busca dados não processados e os repassa ao NATS.</li>
+<li>Mapper: processa os dados do NATS e, após o processamento, os envia de volta ao NATS.</li>
+<li>Saver: recebe os dados processados do NATS e, finalmente, (poderia) salvá-los.</li>
+</ul>
+<p>Como já mencionado, a troca de mensagens no NATS é baseada em <em>assuntos</em>. Em geral, existe um assunto para cada finalidade. A aplicação utiliza quatro assuntos:</p>
+<p>O Fetcher divide os dados em blocos (<em>chunks</em>) de 100 objetos e mantém um registro de quais blocos ainda não foram processados. A aplicação foi projetada de modo que o Fetcher não possa ser escalado.</p>
+<p>O Fetcher se inscreve no assunto <em>mapper_status</em> e aguarda até que um Mapper publique uma mensagem confirmando que está pronto para processar dados. Quando o Fetcher recebe esta informação, ele publica um bloco de dados no assunto <em>mapper_data</em> e recomeça o ciclo.</p>
+<p>Como mencionado, quando um mapper está pronto para processar mais dados, ele publica essa informação de disponibilidade no assunto <em>mapper_status</em>. Ele também assina o assunto <em>mapper_data</em>. Quando o Mapper recebe uma mensagem, ele a processa, publica os dados processados no assunto <em>saver_data</em> e começa tudo novamente. O assunto <em>mapper_data</em> opera em modo de fila, então cada mensagem publicada é recebida por apenas um Mapper.</p>
+<p>O Saver assina o assunto <em>saver_data</em>. Ao receber uma mensagem, ele a salva e publica uma mensagem de confirmação (<em>acknowledgement</em>) no assunto <em>processed_data</em>. O Fetcher assina esse assunto e acompanha quais blocos de dados já foram salvos. Assim, mesmo que alguma parte da aplicação falhe, todos os dados acabarão sendo processados e salvos. Além disso, o assunto <em>saver_data</em> também é utilizado no modo de fila, garantindo que cada bloco de dados processados seja gerido por apenas um Saver.</p>
+<p>Para simplificar, o salvamento no banco de dados e a busca na API externa foram omitidos em nossa aplicação.</p>
+<p>Para obter uma descrição mais detalhada da aplicação, consulte o <a href="https://github.com/kubernetes-hy/material-example/blob/master/app11/pseudocode.md">pseudocódigo</a> ou o <a href="https://github.com/kubernetes-hy/material-example/tree/master/app11">código-fonte</a>.</p>
+<p>Antes de implantar o aplicativo, utilizaremos o <a href="https://github.com/nats-io/k8s">Helm chart</a> para instalar o NATS no nosso cluster:</p>
+<pre><code class="language-oxygene">helm repo add nats https://nats-io.github.io/k8s/helm/charts/
+helm repo update
+helm upgrade --install my-nats nats/nats   --namespace nats   --create-namespace   --set promExporter.enabled=true
+</code></pre>
+<p>Agora podemos executar a aplicação. Pelos logs, é possível perceber que os dados são transmitidos para o <em>saver</em>:</p>
+<pre><code class="language-ada">$ kubectl logs saver-dep-7548c99df-lhjsl
+Received package 473. And data of length: 100
+Received package 747. And data of length: 100
+Received package 184. And data of length: 100
+Received package 463. And data of length: 100
+Received package 224. And data of length: 100
+Received package 237. And data of length: 100
+Received package 582. And data of length: 100
+Received package 53. And data of length: 100
+Received package 492. And data of length: 100
+Received package 478. And data of length: 100
+Received package 142. And data of length: 100
+</code></pre>
+<p>Além do NATS, também instalamos o <a href="https://github.com/nats-io/prometheus-nats-exporter">NATS Prometheus exporter</a>, que expõe métricas do servidor NATS em formato Prometheus no endpoint <code>/metrics</code>. O Prometheus pode então rastrear (<em>scrape</em>) essas métricas e podemos usar o Grafana para visualizá-las em <em>dashboards</em> para monitoramento em tempo real.</p>
+<p>Vamos agora habilitar o monitoramento. Primeiro iniciamos o Prometheus e o Grafana de forma semelhante ao <a href="https://courses.mooc.fi/org/uh-cs/courses/devops-with-kubernetes-2026/chapter-3/monitoring">Capítulo 3</a>.</p>
+<p>O próximo passo é informar ao Prometheus onde encontrar o endpoint de métricas do pod NATS. Para isso, aplicamos o seguinte arquivo de valor <em>nats-prom-values.yaml</em>:</p>
+<pre><code class="language-nix">alertmanager:
+  enabled: false
+
+pushgateway:
+  enabled: false
+
+server:
+  remoteWrite: []
+
+# Configuração de rastreamento (scrape) estática para métricas do NATS
+extraScrapeConfigs: |
+  - job_name: nats
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - my-nats-0.my-nats-headless.nats.svc.cluster.local:7777
+</code></pre>
+<p>O comando é o seguinte:</p>
+<pre><code class="language-ada">helm upgrade --install prom prometheus-community/prometheus   --namespace monitoring   --create-namespace   --values nats-prom-values.yaml
+</code></pre>
+<p>Em termos mais técnicos, essa configuração adiciona uma tarefa de rastreamento (<em>scrape job</em>) do Prometheus, chamada <code>nats</code>, direcionada a <em>my-nats-0.my-nats-headless.nats.svc.cluster.local:7777</em>, e rastreia periodicamente o endpoint <em>/metrics</em> para a ingestão de métricas.</p>
+<p>Como de praxe, podemos utilizar o Grafana para visualizar os dados. Em vez de escrever as consultas manualmente, usamos uma configuração já pronta aplicando <a href="https://raw.githubusercontent.com/kubernetes-hy/material-example/refs/heads/master/app11/grafana-values.yaml">grafana-values.yaml</a>, que cria um painel (<em>dashboard</em>) com quatro quadros (<em>panels</em>). Aplicamos o arquivo de valores com o comando:</p>
+<pre><code class="language-ada">helm upgrade --install grafana grafana/grafana   --namespace monitoring   --values grafana-values.yaml
+</code></pre>
+<p>Agora estamos prontos para abrir o Grafana. Como de costume, fazemos o redirecionamento de porta (<em>port-forward</em>):</p>
+<pre><code class="language-apache">kubectl port-forward -n monitoring svc/grafana 3000:80
+</code></pre>
+<p>O painel será exibido e as consultas PromQL correspondentes aos gráficos são as seguintes:</p>
+<ul>
+<li>NATS target up/down <code>(up{job="nats"})</code></li>
+<li>Connection count <code>(sum(nats_varz_connections))</code></li>
+<li>Message throughput in/out <code>(rate(nats_varz_in_msgs[5m]), rate(nats_varz_out_msgs[5m]))</code></li>
+<li>Byte throughput in/out <code>(rate(nats_varz_in_bytes[5m]), rate(nats_varz_out_bytes[5m]))</code></li>
+</ul>
+<p>Para mais detalhes, consulte a <a href="https://docs.nats.io/running-a-nats-service/nats_admin/monitoring#monitoring-endpoints">documentação</a> ou um <a href="https://www.synadia.com/blog/nats-http-monitoring-endpoints">post no blog</a> dos criadores do NATS.</p>
+<h3>Exercício: 4.6. O projeto, etapa 23</h3>
+<p>Crie um novo serviço separado para enviar mensagens de status das tarefas (<em>todos</em>) para <em>algum</em> serviço de chat. Vamos chamar o novo serviço de "broadcaster".</p>
+<p>Requisitos:
+1. O backend deve enviar uma mensagem para o NATS ao salvar ou atualizar as tarefas.
+2. O <em>broadcaster</em> deve assinar as mensagens do NATS.
+3. O <em>broadcaster</em> deve repassar a mensagem para <strong>um serviço externo</strong> em um formato que ele suporte.</p>
+<p>Para o serviço externo, você pode escolher um destes:
+- Discord (você pode usar a configuração do curso Full Stack Discord, veja os detalhes)
+- Telegram
+- Slack</p>
+<p>Ou, se não quiser usá-los, utilize a opção "Generic", na qual uma URL é definida como variável de ambiente e o payload da mensagem (<em>payload</em>) é, por exemplo:</p>
+<pre><code class="language-json">{
+  &quot;user&quot;: &quot;bot&quot;,
+  &quot;message&quot;: &quot;A todo was created&quot;
+}
+</code></pre>
+<p>O <em>broadcaster</em> deve ter capacidade de ser escalado sem enviar a mensagem várias vezes. Teste se ele funciona bem rodando com 6 réplicas. As mensagens só precisam ser enviadas para o serviço externo se todos os serviços estiverem operando corretamente. Portanto, uma perda aleatória de mensagem não é problema, mas o envio duplicado é.</p>
+</body>
+</html>

@@ -1,0 +1,131 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{Muito além do Kubernetes (\textit{Beyond Kubernetes})}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Opções de plataformas baseadas em Kubernetes
+    \item Configurar uma plataforma \textit{serverless} (Knative) e fazer o \textit{deploy} de uma carga de trabalho simples
+\end{itemize}
+
+Como o Kubernetes é, na verdade, uma plataforma de base, vamos explorar alguns sistemas e blocos de construção famosos que rodam sobre ele.
+
+\begin{quote}
+"Kubernetes é uma plataforma para construir plataformas. É um lugar melhor para se começar, mas não é o objetivo final." — Kelsey Hightower (@kelseyhightower), 27 de Novembro de 2017.
+\end{quote}
+
+O OpenShift é um Kubernetes com foco corporativo ("\textit{enterprise}"). Afirmar que você "não usa Kubernetes porque usa OpenShift" seria o equivalente a dizer "Eu não tenho um motor, eu tenho um carro!". Outras opções de Kubernetes prontos para uso em produção incluem o Rancher - que você deve ter visto anteriormente graças ao k3d (k3s) - e o Anthos GKE do Google. Essas são todas opções a serem consideradas quando você precisa tomar a decisão crucial entre qual distribuição de Kubernetes adotar e se deseja usar um serviço gerenciado.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.5: Comparação de Plataformas]
+Escolha um provedor de serviços (como o Rancher, por exemplo) e compare-o com outro (como o OpenShift). Decida de maneira arbitrária qual provedor de serviço é "melhor" e apresente argumentos em defesa de sua escolha contra a do outro provedor. 
+
+\textit{Para a submissão, uma lista em tópicos (bullet points) é o suficiente.}
+\end{tcolorbox}
+
+\section*{\color{primary}Serverless}
+
+O uso de arquiteturas \textit{Serverless} ("sem servidor") ganhou muita popularidade. Quer seja o Google Cloud Run, Knative, OpenFaaS, OpenWhisk, Fission ou Kubeless, todos eles rodam em cima do Kubernetes - ou ao menos são capazes disso. Por isso, uma afirmação como "O Kubernetes está competindo com o serverless" não faz muito sentido.
+
+Para isso, escolheremos o \textbf{Knative}, pois ele é a solução na qual o Google Cloud Run é baseado, apresentando-se como uma opção bastante competente em comparação com outras alternativas \textit{open-source} disponíveis. Isso também nos mantém no tema de "plataformas sobre plataformas", já que ele poderia ser usado para criar sua própria plataforma \textit{serverless}.
+
+O Knative possui seu próprio contrato de execução (\textit{runtime contract}) apoiado pela comunidade. Ele descreve quais tipos de recursos uma aplicação \textbf{deve} e \textbf{deveria} ter para rodar de forma adequada na plataforma. Um requisito essencial é que a própria aplicação precisa ser \textit{stateless} (sem manutenção de estado local) e configurável por meio de variáveis de ambiente. Esse tipo de especificação \textit{open-source} ajuda o projeto a ganhar uma adoção mais ampla.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.6: Testando Serverless]
+Instale o componente \textit{Knative Serving} no seu cluster k3d.
+Para que o Knative funcione localmente no k3d, você precisa criar um cluster \textbf{sem} o Traefik:
+
+\begin{lstlisting}[language=bash]
+$ k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2 --k3s-arg "--disable=traefik@server:0" --image rancher/k3s:v1.34.1-k3s1
+\end{lstlisting}
+
+Em seguida, siga os guias de instalação via YAML oficiais. Para a camada de rede, você pode escolher o \textit{Kourier}. Na seção "\textit{Configure DNS}", selecione \textit{Magic DNS (slip.io)}.
+
+Você poderá se deparar com alguns pods em CrashLoopBackOff:
+\begin{lstlisting}[language=bash]
+$ kubectl get pods -n knative-serving
+NAME                                      READY   STATUS             RESTARTS      AGE
+activator-67855958d-w2ws8                 0/1     Running            0             64s
+webhook-5446675b97-2ngh6                  0/1     CrashLoopBackOff   3 (12s ago)   64s
+\end{lstlisting}
+
+Verifique os logs dos \textit{pods} que estão falhando para descobrir como consertar o problema. Note que você pode acessar o serviço localmente da sua máquina host usando:
+
+\begin{lstlisting}[language=bash]
+curl -H "Host: hello.default.192.168.240.3.sslip.io" http://localhost:8081
+\end{lstlisting}
+
+Onde \textit{Host} é a URL que você obteve ao rodar o comando: \texttt{kubectl get ksvc}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.7: Faça o deploy para o serverless]
+Modifique o serviço Ping-pong do aplicativo "Log Output" para utilizar \textit{serverless}.
+
+DICAS:
+\begin{itemize}
+    \item Utilize o DNS do serviço totalmente qualificado (\textit{fully qualified}) do Kubernetes ao chamar os serviços. Em vez de usar \texttt{http://pingpong}, você deve usar \texttt{http://pingpong.exercises.svc.cluster.local}.
+    \item Você pode definir o "hostname" da função \texttt{url rewrite} se quiser que o endpoint \textit{pingpong} fique disponível via navegador. O \textit{HTTPRoute} pode ficar assim:
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /pingpong
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            hostname: pingpong.exercises.192.168.144.3.sslip.io
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.8: O Panorama (Landscape)]
+Acesse e analise o documento oficial \textbf{CNCF Cloud Native Landscape}. Circule o logotipo de cada produto ou projeto que você já usou. Em seguida, use uma cor diferente para circular todas as dependências tecnológicas usadas por esses projetos principais. 
+
+Faça uma lista detalhando os cenários e contextos de uso em que você precisou deles. Qualquer software rodado fora do contexto deste curso pode ser simplesmente rotulado como "uso fora do curso".
+\end{tcolorbox}
+
+\end{document}

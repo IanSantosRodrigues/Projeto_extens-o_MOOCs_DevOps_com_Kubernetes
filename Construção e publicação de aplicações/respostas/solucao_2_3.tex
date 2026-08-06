@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 2.3 - ConfigMaps e Secrets}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\textbf{Guia de Solução:}
+
+\subsection*{\color{secondary}Passo a Passo}
+
+1. Crie um ConfigMap com dados como \texttt{APP\_ENV} e \texttt{API\_URL}.
+2. Crie um Secret com a senha codificada em Base64 ou via \texttt{kubectl create secret generic}.
+3. No Deployment, use \texttt{envFrom.configMapRef} e \texttt{secretKeyRef}.
+4. Valide com logs ou endpoint da aplicação, sem imprimir a senha em texto claro.
+
+\end{document}

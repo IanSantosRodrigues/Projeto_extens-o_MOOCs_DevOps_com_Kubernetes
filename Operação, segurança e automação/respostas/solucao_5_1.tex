@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.1 - Faça você mesmo um CRD e Controller}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Definição da CRD}: Crie o YAML da CRD \texttt{DummySite}. No \texttt{openAPIV3Schema}, defina a propriedade \texttt{website_url} do tipo \texttt{string}. Aplique no cluster.
+2. \textbf{Construção do Controlador}: Escreva uma aplicação em JavaScript usando a biblioteca \texttt{@kubernetes/client-node}. 
+3. \textbf{Observar a API}: Faça o controlador utilizar um \textit{Watcher} em \texttt{/apis/seugrupo/v1/dummysites}. Quando ele capturar o evento \texttt{ADDED}, leia a variável \texttt{website_url}.
+4. \textbf{Criação do Job}: No mesmo instante de detecção, monte um objeto JSON de \texttt{Job}. A especificação do contêiner deste Job deve rodar uma imagem simples (como Alpine ou cURL) executando \texttt{sh -c "curl -L \$WEBSITE_URL > /usr/share/nginx/html/index.html"} ou logicamente equivalente. Use as chamadas POST para persistir o Job no Kubernetes.
+\end{tcolorbox}
+
+\end{document}

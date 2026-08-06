@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.2 - O projeto, passo 21}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Criar Rota Healthz no Backend}: Crie uma variável global \texttt{isHealthy = true}. Adicione uma rota \texttt{GET /healthz} que retorne código \texttt{200 OK} se \texttt{isHealthy} for verdadeiro, ou \texttt{500 Internal Server Error} se for falso.
+2. \textbf{Simulação de Falha}: Crie um botão no Frontend (ex: 'Quebrar App') e faça-o acionar uma rota no Backend que altera \texttt{isHealthy} para \texttt{false}.
+3. \textbf{Configurar as Probes}: No manifesto de Deployment da aplicação, adicione \texttt{readinessProbe} e \texttt{livenessProbe} apontando para o \textit{path} \texttt{/healthz} na porta do seu servidor web.
+4. \textbf{Verificação}: Implante as mudanças. Ao clicar no botão 'Quebrar App', a aplicação começará a retornar erro 500 no \texttt{/healthz}. O Kubernetes (kubelet) notará a falha através da \texttt{livenessProbe} e forçará a reinicialização (restart) do \textit{pod}, restaurando a saúde do serviço.
+\end{tcolorbox}
+
+\end{document}

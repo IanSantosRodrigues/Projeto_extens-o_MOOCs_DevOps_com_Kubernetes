@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.9 - O projeto, etapa 25}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Criar Diretórios Kustomize}: Reestruture seus arquivos YAML para usar \textit{bases} e \textit{overlays}. Crie a pasta \texttt{base} com os YAMLs principais, e crie as pastas \texttt{overlays/staging} e \texttt{overlays/production}.
+2. \textbf{Configurar Staging}: No diretório de \texttt{staging}, modifique o \texttt{kustomization.yaml} aplicando \textit{patches} que alterem a URL do \textit{webhook} do broadcaster para uma URL falsa (mock) e que excluam ou não chamem o CronJob de backup.
+3. \textbf{Configurar Production}: No diretório de \texttt{production}, o \textit{webhook} recebe a URL verdadeira e o \textit{CronJob} de backup é incluído nas definições.
+4. \textbf{Ajuste de Namespaces e Branches}: Crie duas \texttt{Applications} no ArgoCD. A de staging aponta para o path \texttt{overlays/staging} e \texttt{targetRevision: main}. A de produção aponta para \texttt{overlays/production} e pode usar um padrão de \textit{tags} na revisão para só disparar quando houver a tag oficial.
+5. \textbf{Aplicar}: Commit a estrutura. O Argo gerenciará os dois namespaces de forma distinta a partir do mesmo código-base.
+\end{tcolorbox}
+
+\end{document}

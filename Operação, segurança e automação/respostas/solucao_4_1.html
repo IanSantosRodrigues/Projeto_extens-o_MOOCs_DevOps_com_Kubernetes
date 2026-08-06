@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 4.1 - Readiness Probe</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 4.1 - Readiness Probe</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Adicionar Readiness Probe ao Ping-pong</strong>: Edite o manifesto <code>Deployment</code> da aplicação Ping-pong. Adicione o campo <code>readinessProbe</code> para verificar a conexão com o banco de dados (ex: executando um script <code>pg_isready</code> ou acessando um <em>endpoint</em> que só responde quando o banco está acessível).</li>
+<li><strong>Adicionar Readiness Probe ao Log Output</strong>: No <code>Deployment</code> do Log Output, configure um <code>readinessProbe</code> do tipo <code>httpGet</code> para tentar acessar o serviço do Ping-pong na porta correta.</li>
+<li><strong>Teste Prático</strong>: Faça o apply de todos os manifestos, exceto o do banco de dados (StatefulSet/Service). Verifique o status com <code>kubectl get pods</code>. Os <em>pods</em> do Ping-pong e do Log Output devem iniciar, mas o campo <code>READY</code> ficará como <code>0/1</code> porque a sonda de prontidão falhará. Assim que você fizer o apply do banco de dados, eles passarão para <code>1/1</code>.</li>
+</ol>
+    </div>
+</body>
+</html>

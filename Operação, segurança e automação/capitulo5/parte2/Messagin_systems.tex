@@ -1,0 +1,191 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{Sistemas de Mensagens (\textit{Messaging Systems})}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Criar uma arquitetura complexa de microsserviços usando NATS como sistema de mensagens.
+\end{itemize}
+
+As filas de mensagens (\textit{Message queues}) são um método de comunicação entre serviços. Elas têm uma ampla variedade de casos de uso e são úteis quando se deseja escalar aplicações. Diversos serviços baseados em APIs REST HTTP que desejam se comunicar entre si exigem que um conheça o endereço do outro. Em contrapartida, ao usar filas de mensagens, as mensagens são enviadas e recebidas a partir da própria fila.
+
+Nesta seção, usaremos um sistema de mensagens chamado \textbf{NATS} para explorar os benefícios da mensageria. Antes de começarmos, vamos revisar os conceitos básicos do NATS.
+
+No NATS, as aplicações se comunicam enviando e recebendo mensagens. Estas mensagens são endereçadas e identificadas por assuntos (\textit{subjects}). O emissor \textit{publica} a mensagem com um assunto. Os receptores \textit{assinam} os assuntos para receber as mensagens publicadas. No modelo padrão publicação-assinatura (\textit{publish-subscribe}), todos os assinantes do assunto recebem a mensagem publicada. Também é possível usar um modelo de fila (\textit{queue}), no qual cada mensagem publicada é entregue a apenas \textbf{um} assinante.
+
+O NATS oferece diferentes semânticas de entrega de mensagens ou modos de operação. A funcionalidade básica fornecida pelo \textit{Core NATS} é o envio da mensagem \textit{no máximo uma vez}: se não houver assinantes ouvindo o assunto (nenhuma correspondência de assunto) ou se não estiverem ativos no momento em que a mensagem é enviada, a mensagem não será recebida. Utilizando a funcionalidade \textit{Jetstream}, também é possível alcançar a entrega de mensagens \textit{pelo menos uma vez} ou \textit{exatamente uma vez}, com persistência.
+
+Com isso em mente, podemos projetar nossa primeira aplicação que usa mensageria para se comunicar.
+
+Temos um conjunto de dados de 100.000 objetos JSON que exigem um processamento pesado, e depois precisamos salvar os dados processados. Infelizmente, processar um único objeto JSON leva tanto tempo que processar todos os dados exigiria horas de trabalho. Para resolver isso, dividi a aplicação em serviços menores que podem ser escalados individualmente.
+
+A aplicação está dividida em 3 partes:
+\begin{itemize}
+    \item \textbf{Fetcher}: busca dados não processados e os repassa ao NATS.
+    \item \textbf{Mapper}: processa os dados do NATS e, após o processamento, os envia de volta ao NATS.
+    \item \textbf{Saver}: recebe os dados processados do NATS e, finalmente, (poderia) salvá-los.
+\end{itemize}
+
+Como já mencionado, a troca de mensagens no NATS é baseada em \textit{assuntos}. Em geral, existe um assunto para cada finalidade. A aplicação utiliza quatro assuntos:
+
+O \textbf{Fetcher} divide os dados em blocos (\textit{chunks}) de 100 objetos e mantém um registro de quais blocos ainda não foram processados. A aplicação foi projetada de modo que o Fetcher não possa ser escalado.
+
+O Fetcher se inscreve no assunto \texttt{mapper\_status} e aguarda até que um \textbf{Mapper} publique uma mensagem confirmando que está pronto para processar dados. Quando o Fetcher recebe esta informação, ele publica um bloco de dados no assunto \texttt{mapper\_data} e recomeça o ciclo.
+
+Como mencionado, quando um mapper está pronto para processar mais dados, ele publica essa informação de disponibilidade no assunto \texttt{mapper\_status}. Ele também assina o assunto \texttt{mapper\_data}. Quando o Mapper recebe uma mensagem, ele a processa, publica os dados processados no assunto \texttt{saver\_data} e começa tudo novamente. O assunto \texttt{mapper\_data} opera em modo de fila, então cada mensagem publicada é recebida por apenas um Mapper.
+
+O \textbf{Saver} assina o assunto \texttt{saver\_data}. Ao receber uma mensagem, ele a salva e publica uma mensagem de confirmação (\textit{acknowledgement}) no assunto \texttt{processed\_data}. O Fetcher assina esse assunto e acompanha quais blocos de dados já foram salvos. Assim, mesmo que alguma parte da aplicação falhe, todos os dados acabarão sendo processados e salvos. Além disso, o assunto \texttt{saver\_data} também é utilizado no modo de fila, garantindo que cada bloco de dados processados seja gerido por apenas um Saver.
+
+Para simplificar, o salvamento no banco de dados e a busca na API externa foram omitidos em nossa aplicação.
+
+Para obter uma descrição mais detalhada da aplicação, consulte o pseudocódigo ou o código-fonte nas referências.
+
+Antes de implantar o aplicativo, utilizaremos o Helm chart para instalar o NATS no nosso cluster:
+
+\begin{lstlisting}[language=bash]
+helm repo add nats https://nats-io.github.io/k8s/helm/charts/
+helm repo update
+helm upgrade --install my-nats nats/nats \
+  --namespace nats \
+  --create-namespace \
+  --set promExporter.enabled=true
+\end{lstlisting}
+
+Agora podemos executar a aplicação. Pelos logs, é possível perceber que os dados são transmitidos para o \textit{saver}:
+
+\begin{lstlisting}[language=bash]
+$ kubectl logs saver-dep-7548c99df-lhjsl
+Received package 473. And data of length: 100
+Received package 747. And data of length: 100
+Received package 184. And data of length: 100
+Received package 463. And data of length: 100
+Received package 224. And data of length: 100
+Received package 237. And data of length: 100
+Received package 582. And data of length: 100
+Received package 53. And data of length: 100
+Received package 492. And data of length: 100
+Received package 478. And data of length: 100
+Received package 142. And data of length: 100
+\end{lstlisting}
+
+Além do NATS, também instalamos o NATS Prometheus exporter, que expõe métricas do servidor NATS em formato Prometheus no endpoint \texttt{/metrics}. O Prometheus pode então rastrear (\textit{scrape}) essas métricas e podemos usar o Grafana para visualizá-las em \textit{dashboards} para monitoramento em tempo real.
+
+Vamos agora habilitar o monitoramento. Primeiro iniciamos o Prometheus e o Grafana de forma semelhante ao Capítulo 3.
+
+O próximo passo é informar ao Prometheus onde encontrar o endpoint de métricas do pod NATS. Para isso, aplicamos o seguinte arquivo de valor \texttt{nats-prom-values.yaml}:
+
+\begin{lstlisting}[language=bash]
+alertmanager:
+  enabled: false
+
+pushgateway:
+  enabled: false
+
+server:
+  remoteWrite: []
+
+# Configuracao de rastreamento (scrape) estatica para metricas do NATS
+extraScrapeConfigs: |
+  - job_name: nats
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - my-nats-0.my-nats-headless.nats.svc.cluster.local:7777
+\end{lstlisting}
+
+O comando é o seguinte:
+
+\begin{lstlisting}[language=bash]
+helm upgrade --install prom prometheus-community/prometheus \
+  --namespace monitoring \
+  --create-namespace \
+  --values nats-prom-values.yaml
+\end{lstlisting}
+
+Em termos mais técnicos, essa configuração adiciona uma tarefa de rastreamento (\textit{scrape job}) do Prometheus, chamada \texttt{nats}, direcionada a \texttt{my-nats-0.my-nats-headless.nats.svc.cluster.local:7777}, e rastreia periodicamente o endpoint \texttt{/metrics} para a ingestão de métricas.
+
+Como de praxe, podemos utilizar o Grafana para visualizar os dados. Em vez de escrever as consultas manualmente, usamos uma configuração já pronta aplicando \texttt{grafana-values.yaml}, que cria um painel (\textit{dashboard}) com quatro quadros (\textit{panels}). Aplicamos o arquivo de valores com o comando:
+
+\begin{lstlisting}[language=bash]
+helm upgrade --install grafana grafana/grafana \
+  --namespace monitoring \
+  --values grafana-values.yaml
+\end{lstlisting}
+
+Agora estamos prontos para abrir o Grafana. Como de costume, fazemos o redirecionamento de porta (\textit{port-forward}):
+
+\begin{lstlisting}[language=bash]
+kubectl port-forward -n monitoring svc/grafana 3000:80
+\end{lstlisting}
+
+O painel será exibido e as consultas PromQL correspondentes aos gráficos são as seguintes:
+\begin{itemize}
+    \item NATS target up/down \texttt{(up\{job="nats"\})}
+    \item Connection count \texttt{(sum(nats\_varz\_connections))}
+    \item Message throughput in/out \texttt{(rate(nats\_varz\_in\_msgs[5m]), rate(nats\_varz\_out\_msgs[5m]))}
+    \item Byte throughput in/out \texttt{(rate(nats\_varz\_in\_bytes[5m]), rate(nats\_varz\_out\_bytes[5m]))}
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício: 4.6. O projeto, etapa 23]
+Crie um novo serviço separado para enviar mensagens de status das tarefas (\textit{todos}) para \textit{algum} serviço de chat. Vamos chamar o novo serviço de "broadcaster".
+
+\textbf{Requisitos:}
+\begin{enumerate}
+    \item O backend deve enviar uma mensagem para o NATS ao salvar ou atualizar as tarefas.
+    \item O \textit{broadcaster} deve assinar as mensagens do NATS.
+    \item O \textit{broadcaster} deve repassar a mensagem para \textbf{um serviço externo} em um formato que ele suporte.
+\end{enumerate}
+
+Para o serviço externo, você pode escolher um destes: Discord, Telegram ou Slack. Ou, se não quiser usá-los, utilize a opção "Generic", na qual uma URL é definida como variável de ambiente e o \textit{payload} é, por exemplo:
+
+\begin{lstlisting}[language=bash]
+{
+  "user": "bot",
+  "message": "A todo was created"
+}
+\end{lstlisting}
+
+O \textit{broadcaster} deve ter capacidade de ser escalado sem enviar a mensagem várias vezes. Teste se ele funciona bem rodando com 6 réplicas. As mensagens só precisam ser enviadas para o serviço externo se todos os serviços estiverem operando corretamente. Portanto, uma perda aleatória de mensagem não é problema, mas o envio duplicado é.
+\end{tcolorbox}
+
+\end{document}

@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 5.3: Log app, a Edição Service Mesh}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.3: Log app, a Edição Service Mesh]
+Implemente a aplicação Log output na malha de serviço (\textit{service mesh}). 
+
+- Estenda a aplicação desenvolvendo um novo serviço chamado \textit{greeter}, capaz de responder a uma requisição HTTP GET com uma saudação ('Hello').
+
+- A aplicação \textit{log output} deve passar a consumir o serviço \textit{greeter} via rede e exibir a saudação na tela juntamente com as saídas dos logs regulares.
+
+- Implante duas versões diferentes do \textit{greeter} (v1 e v2) e configure as regras de roteamento do Istio (como o \textit{HTTPRoute}) para dividir o tráfego: uma versão deve receber 75\% das requisições e a outra os 25\% restantes.
+\end{tcolorbox}
+
+\end{document}

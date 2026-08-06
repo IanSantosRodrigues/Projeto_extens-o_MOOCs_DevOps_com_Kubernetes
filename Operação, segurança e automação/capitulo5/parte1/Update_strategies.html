@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estratégias de Atualização e Prometheus</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; margin-top: 30px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+        code { font-family: 'Courier New', Courier, monospace; }
+        p code, li code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        a { color: #2980b9; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<h1>Estratégias de Atualização e Prometheus</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Comparar estratégias de atualização</li>
+<li>Implantar software com lançamentos canário (<em>canary releases</em>)</li>
+<li>Usar o Prometheus para consultas personalizadas</li>
+</ul>
+<p>No capítulo anterior, realizamos atualizações automatizadas com um pipeline de implantação. A atualização simplesmente funcionou, mas não fazemos ideia de como ela realmente ocorreu, a não ser pelo fato de que um <em>pod</em> foi alterado. Vamos agora analisar como podemos tornar o processo de atualização mais seguro, ajudando-nos a alcançar um número maior de "noves" (<em>nines</em>) na disponibilidade.</p>
+<p>Existem múltiplas estratégias de atualização/implantação/lançamento. Vamos nos concentrar em duas delas:
+- Atualização contínua (<em>Rolling update</em>)
+- Lançamento canário (<em>Canary release</em>)</p>
+<p>Ambas as estratégias de atualização são projetadas para garantir que a aplicação continue funcionando durante e após uma atualização. Em vez de atualizar todos os <em>pods</em> ao mesmo tempo, a ideia é atualizá-los um de cada vez e confirmar se a aplicação está funcionando.</p>
+<h2>Atualização contínua (<em>Rolling update</em>)</h2>
+<p>Por padrão, o Kubernetes inicia uma atualização contínua (<em>rolling update</em>) quando alteramos a imagem. Isso significa que cada <em>pod</em> é atualizado sequencialmente. A atualização contínua é um excelente padrão, pois permite que a aplicação permaneça disponível durante o processo de atualização. Se decidirmos enviar uma imagem que não funciona, a atualização será interrompida automaticamente.</p>
+<p>Preparei uma aplicação e imagens com 5 versões.
+- A versão com a tag v1 sempre funciona
+- v2 nunca funciona
+- v3 funciona 90% das vezes
+- v4 morrerá após 60 segundos, e
+- v5 sempre funciona</p>
+<p>A seguinte configuração pode ser usada para colocar a aplicação v1 em funcionamento:</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaky-update-dep
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: flaky-update
+  template:
+    metadata:
+      labels:
+        app: flaky-update
+    spec:
+      containers:
+        - name: flaky-update
+          image: mluukkai/dwk-app8:v1
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaky-update-svc
+spec:
+  selector:
+    app: flaky-update
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3541
+  type: LoadBalancer
+</code></pre>
+<p>Vamos implantar a aplicação:</p>
+<pre><code class="language-sql">$ kubectl apply -f deployment.yaml
+  deployment.apps/flaky-update-dep created
+
+$ kubectl get po
+  NAME                                READY   STATUS    RESTARTS   AGE
+  flaky-update-dep-7b5fd9ffc7-27cxt   1/1     Running   0          87s
+  flaky-update-dep-7b5fd9ffc7-mp8vd   1/1     Running   0          88s
+  flaky-update-dep-7b5fd9ffc7-m4smm   1/1     Running   0          87s
+  flaky-update-dep-7b5fd9ffc7-nzl98   1/1     Running   0          88s
+
+$ kubectl get svc
+  NAME               TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)        
+  flaky-update-svc   LoadBalancer   34.118.229.159   35.228.249.129   80:31733/TCP
+</code></pre>
+<p>Como podemos ver, a aplicação está funcionando. Agora mude a tag para v2 e aplique.</p>
+<pre><code class="language-sql">$ kubectl apply -f deployment.yaml
+$ kubectl get po --watch 
+  NAME                                READY   STATUS    RESTARTS   AGE
+  flaky-update-dep-84f4c94bc7-dkqcw   1/1     Running   0          17s
+  flaky-update-dep-84f4c94bc7-h7d2t   1/1     Running   0          9s
+  flaky-update-dep-84f4c94bc7-ks9hn   1/1     Running   0          16s
+  flaky-update-dep-84f4c94bc7-tmz2g   1/1     Running   0          8s
+</code></pre>
+<p>Você pode ver que a atualização contínua foi concluída, mas infelizmente, a aplicação não funciona mais. A aplicação está em execução, apenas existe um bug que a impede de funcionar corretamente. Como comunicamos esse mau funcionamento fora da aplicação? É aqui que entram as <em>ReadinessProbes</em>.</p>
+<p>Com uma <em>ReadinessProbe</em>, o Kubernetes pode verificar se um <em>pod</em> está pronto para processar requisições. A aplicação possui um <em>endpoint</em> <code>/healthz</code> na porta 3541, e podemos usá-lo para testar a integridade. Ele simplesmente responderá com o código de status 500 se não estiver funcionando e 200 se estiver.</p>
+<p>Vamos reverter a versão para a v1 também, para que possamos testar a atualização para a v2 novamente.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaky-update-dep
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: flaky-update
+  template:
+    metadata:
+      labels:
+        app: flaky-update
+    spec:
+      containers:
+        - name: flaky-update
+          image: mluukkai/dwk-app8:v1
+          readinessProbe:
+            initialDelaySeconds: 10 # Atraso inicial ate que a prontidao seja testada
+            periodSeconds: 5 # Com que frequencia testar
+            httpGet:
+               path: /healthz
+               port: 3541
+</code></pre>
+<p>Aqui, o <code>initialDelaySeconds</code> e o <code>periodSeconds</code> significam que a sonda é enviada 10 segundos depois que o contêiner estiver ativo e a cada 5 segundos depois disso. Agora, se alterarmos a tag para v2 e aplicarmos, o resultado ficará assim:</p>
+<pre><code class="language-sql">$ kubectl apply -f deployment.yaml
+  deployment.apps/flaky-update-dep configured
+
+$ kubectl get po
+  NAME                                READY   STATUS    RESTARTS   AGE
+  flaky-update-dep-f5c79dbc-8lnqm     1/1     Running   0          115s
+  flaky-update-dep-f5c79dbc-86fmd     1/1     Running   0          116s
+  flaky-update-dep-f5c79dbc-qzs9p     1/1     Running   0          98s
+  flaky-update-dep-54888b877b-dkctl   0/1     Running   0          25s
+  flaky-update-dep-54888b877b-dbw29   0/1     Running   0          24s
+</code></pre>
+<p>Aqui, três dos <em>pods</em> estão completamente funcionais. Um dos <em>pods</em> v1 foi removido para dar lugar aos v2, mas como eles não funcionam, nunca ficam com status <em>READY</em>, e a atualização não pode continuar. Como esperado, vemos o motivo da falta de prontidão com o comando <code>kubectl describe</code>:</p>
+<pre><code class="language-sql">$ kubectl describe pod flaky-update-dep-54888b877b-dkctl
+...
+  Warning  Unhealthy  3s (x20 over 97s)  kubelet            Readiness probe failed: HTTP probe failed with statuscode: 500
+</code></pre>
+<h3>Ingress do GKE e prontidão do pod</h3>
+<p>Se você estiver usando o <em>Ingress</em> na sua aplicação, deve notar que a <em>ReadinessProbe</em> não funciona exatamente como se esperaria, pois as requisições também são roteadas para <em>pods</em> que não estão <em>ready</em>. O ideal seria definir o <em>BackendConfig</em>. Continuaremos a usar a Gateway API, então isso não nos preocupa.</p>
+<h3>Continuando o curso com k3d</h3>
+<p>Você pode continuar usando o Google Kubernetes Engine ou voltar a usar o k3d. Como nossas aplicações agora usam a Gateway API, você deve habilitá-la no cluster k3d.</p>
+<h3>Exercício 4.1: Readiness probe</h3>
+<p>Crie uma <em>ReadinessProbe</em> para a aplicação Ping-pong. Ela deve estar pronta quando tiver uma conexão com o banco de dados.
+E crie outra <em>ReadinessProbe</em> para a aplicação <em>Log output</em>. Ela deve estar pronta quando puder receber dados da aplicação Ping-pong.</p>
+<h3>Exercício 4.2: O projeto, passo 21</h3>
+<p>Crie as sondas (<em>probes</em>) e o <em>endpoint</em> necessários para O Projeto para garantir que ele esteja funcionando e conectado a um banco de dados. Adicione um botão à sua aplicação que pode ser usado para "quebrar" a aplicação.</p>
+<pre><code class="language-javascript">let isHealthy = true
+// ...
+app.get(&quot;/healthz&quot;, (req, res) =&gt; {
+  if (!isHealthy) {
+    return res.status(500).json({ status: &quot;unhealthy&quot; })
+  }
+  return res.status(200).json({ status: &quot;ok&quot; })
+})
+</code></pre>
+<h2>Lançamento canário (<em>Canary release</em>)</h2>
+<p>Com atualizações contínuas, ao incluir as Sondas (<em>Probes</em>), poderíamos criar lançamentos sem tempo de inatividade para os usuários. Às vezes isso não é o suficiente e você precisa ser capaz de fazer um <em>lançamento parcial</em> para alguns usuários e obter dados de uso e estatísticas para o próximo lançamento. <em>Lançamento canário</em> é o termo usado para descrever uma estratégia de lançamento em que introduzimos um subconjunto dos usuários a uma nova versão da aplicação. Quando a confiança no novo lançamento aumenta, o número de usuários na nova versão pode ser aumentado até que a versão antiga não seja mais usada.</p>
+<p>Usaremos o Argo Rollouts para testar um tipo de lançamento canário:</p>
+<pre><code class="language-bash">$ kubectl create namespace argo-rollouts
+$ kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+</code></pre>
+<p>O <em>Rollout</em> substituirá nosso <em>deployment</em> criado anteriormente e nos permitirá usar um novo campo:</p>
+<pre><code class="language-yaml">apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: flaky-update-dep
+spec:
+  replicas: 4
+  strategy:
+    canary:
+      steps:
+      - setWeight: 25
+      - pause:
+          duration: 30s
+      - setWeight: 50
+      - pause:
+          duration: 30s
+# ... Sondas omitidas por brevidade
+</code></pre>
+<p>A estratégia acima moverá primeiro 25% (<em>setWeight</em>) dos <em>pods</em> para uma nova versão, após o que esperará por 30 segundos, moverá para 50% dos <em>pods</em> e depois aguardará por 30 segundos até que cada <em>pod</em> seja atualizado.</p>
+<h3>Exercício 4.3: Prometheus</h3>
+<p>Inicie agora o Prometheus com Helm e use <em>port-forward</em> para acessar o site GUI.
+Escreva uma consulta que mostre o número de <em>pods</em> criados por StatefulSets no <em>namespace</em> <code>prometheus</code>.</p>
+<p>Com o novo <em>Rollout</em> e <em>AnalysisTemplate</em>, podemos testar com segurança a implantação de qualquer versão. O <em>AnalysisTemplate</em> usará o Prometheus para consultar o estado do <em>deployment</em>.</p>
+<pre><code class="language-yaml">apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: restart-rate
+spec:
+  metrics:
+  - name: restart-rate
+    initialDelay: 2m
+    successCondition: result &lt; 2
+    provider:
+      prometheus:
+        address: http://kube-prometheus-stack-1602-prometheus.prometheus.svc.cluster.local:9090 # Nome DNS para o meu Prometheus, encontre o seu com kubectl describe svc ...
+        query: |
+          scalar(
+            sum(kube_pod_container_status_restarts_total{namespace=&quot;default&quot;, container=&quot;flaky-update&quot;}) -
+            sum(kube_pod_container_status_restarts_total{namespace=&quot;default&quot;, container=&quot;flaky-update&quot;} offset 2m)
+          )
+</code></pre>
+<h3>Exercício 4.4: Seu canário</h3>
+<p>Crie um <em>AnalysisTemplate</em> para a aplicação Ping-pong que acompanhará o uso de CPU de todos os contêineres no <em>namespace</em>.</p>
+<h2>Outras estratégias de implantação</h2>
+<p>O Kubernetes suporta a estratégia de Recriação (<em>Recreate</em>), que derruba os <em>pods</em> anteriores e substitui tudo pelo atualizado. O Argo Rollouts suporta a estratégia <em>BlueGreen</em>, na qual uma nova versão é executada lado a lado com a nova, mas o tráfego é alternado entre as duas em um determinado ponto.</p>
+<h3>Exercício 4.5: O projeto, passo 22</h3>
+<p>Nossa aplicação de tarefas (<em>todo</em>) poderia ter um campo "Concluído" (<em>Done</em>) para tarefas que já foram feitas. Deve ser uma requisição PUT para <code>/todos/&lt;id&gt;</code>.</p>
+</body>
+</html>

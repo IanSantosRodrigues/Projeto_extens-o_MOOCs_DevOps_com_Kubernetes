@@ -1,0 +1,73 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Pipeline de Implantação e Publicação}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+\item Construir e publicar imagens de contêiner
+\item Automatizar deploy com pipeline
+\item Reduzir comandos manuais na entrega da aplicação
+\end{itemize}
+
+Publicar uma aplicação manualmente funciona nas primeiras vezes, mas rapidamente vira fonte de erro. Um pipeline de implantação organiza o caminho entre alteração de código, construção da imagem, publicação no registry e atualização dos manifestos no cluster.
+
+\section*{\color{primary}Fluxo básico}
+
+Um fluxo mínimo de publicação passa por quatro etapas: testar a aplicação, construir a imagem Docker, publicar a imagem em um registry e atualizar o cluster com a nova versão.
+
+\begin{lstlisting}[language=bash]
+docker build -t registry.example.com/app:v1 .
+docker push registry.example.com/app:v1
+kubectl set image deployment/app-dep app=registry.example.com/app:v1
+\end{lstlisting}
+
+Esse exemplo é útil para entender o processo, mas em um projeto real preferimos registrar a versão no manifesto e aplicar de forma declarativa.
+
+\section*{\color{primary}Tags de imagem}
+
+Usar \texttt{latest} parece conveniente, mas dificulta rastrear qual versão está em execução. Tags baseadas em commit, versão semântica ou número de build tornam o deploy reproduzível.
+
+\begin{lstlisting}[language=bash]
+containers:
+  - name: app
+    image: registry.example.com/app:sha-abc123
+\end{lstlisting}
+
+\section*{\color{primary}GitHub Actions como exemplo}
+
+\begin{lstlisting}[language=bash]
+name: deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t registry.example.com/app:sha-do-commit .
+      - name: Push image
+        run: docker push registry.example.com/app:sha-do-commit
+\end{lstlisting}
+
+A etapa de deploy pode aplicar manifestos diretamente, mas uma evolução natural é mover isso para GitOps, como será visto na parte de operação e automação. Não coloque credenciais diretamente no arquivo do pipeline; use secrets do provedor de CI.
+
+\end{document}

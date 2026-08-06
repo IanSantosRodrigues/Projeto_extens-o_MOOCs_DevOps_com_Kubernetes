@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.6 - O projeto, passo 23}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Publicar Mensagens (Backend)}: Integre a biblioteca do NATS no backend principal. Logo após inserir/atualizar um Todo no banco de dados com sucesso, utilize \texttt{nc.publish('todo_events', JSON.stringify(todoData))}.
+2. \textbf{Criar o Serviço Broadcaster}: Crie um novo microsserviço (ex: Node, Python, Go) do zero. Este serviço conectará ao NATS e fará a inscrição (\textit{subscribe}) no tópico \texttt{todo_events}.
+3. \textbf{Encaminhar para Serviço Externo}: Quando o \textit{broadcaster} receber uma mensagem da fila, ele deverá fazer uma requisição POST HTTP (ex: usando \texttt{axios} ou \texttt{curl}) para a URL de um \textit{webhook} do Discord/Telegram (ou um \textit{webhook} de testes genérico) com os dados formatados.
+4. \textbf{Implantação no K8s}: Crie um \texttt{Deployment} para o \textit{broadcaster} garantindo que ele tenha a URL do NATS e a URL do webhook injetadas via variáveis de ambiente.
+\end{tcolorbox}
+
+\end{document}

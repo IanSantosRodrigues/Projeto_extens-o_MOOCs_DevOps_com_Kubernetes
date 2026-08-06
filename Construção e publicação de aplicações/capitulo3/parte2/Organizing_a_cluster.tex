@@ -1,0 +1,86 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Organização de Cluster com Namespaces}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+\item Organizar recursos por namespace
+\item Separar ambientes e responsabilidades
+\item Aplicar comandos com contexto correto
+\end{itemize}
+
+Conforme a quantidade de aplicações cresce, colocar tudo no namespace \texttt{default} torna o cluster confuso. Namespaces são uma forma de separar recursos logicamente dentro do mesmo cluster. Eles não criam isolamento absoluto de segurança por si só, mas ajudam a organizar ambientes, equipes, aplicações e ferramentas de infraestrutura.
+
+Um projeto pode usar namespaces como \texttt{dev}, \texttt{staging} e \texttt{prod}, ou separar por domínio, como \texttt{observability}, \texttt{database} e \texttt{apps}. O mais importante é que a separação reflita uma necessidade real de operação.
+
+\begin{lstlisting}[language=bash]
+kubectl create namespace dev
+kubectl get namespaces
+kubectl get pods -n dev
+\end{lstlisting}
+
+\section*{\color{primary}Aplicando recursos em um namespace}
+
+Um recurso pode declarar o namespace no próprio manifesto ou receber o namespace no comando \texttt{kubectl}. Quando o namespace é declarado no YAML, o manifesto fica mais explícito. Quando ele é passado por linha de comando, o mesmo arquivo pode ser reutilizado em ambientes diferentes.
+
+\begin{lstlisting}[language=bash]
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-dep
+  namespace: apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: nginx:1.27
+\end{lstlisting}
+
+\section*{\color{primary}Contextos do kubectl}
+
+Também é possível configurar o namespace padrão de um contexto. Isso reduz repetição, mas exige cuidado: muitos erros em clusters reais acontecem porque alguém aplicou manifestos no namespace errado.
+
+\begin{lstlisting}[language=bash]
+kubectl config set-context --current --namespace=apps
+kubectl config view --minify
+\end{lstlisting}
+
+\section*{\color{primary}Relação com configuração e acesso}
+
+Namespaces delimitam onde vivem \texttt{ConfigMaps}, \texttt{Secrets}, \texttt{Services}, \texttt{Deployments}, \texttt{StatefulSets} e ferramentas como Prometheus. Um Service chamado \texttt{api-svc} no namespace \texttt{apps} não é o mesmo que um Service de mesmo nome no namespace \texttt{dev}. De outro namespace, a aplicação deve chamar \texttt{api-svc.apps} ou o nome completo do DNS interno.
+
+\section*{\color{primary}Boas práticas}
+
+Crie namespaces para separar responsabilidades reais. Use nomes simples, previsíveis e documentados. Em produção, combine namespaces com RBAC, quotas e políticas de rede.
+
+\end{document}

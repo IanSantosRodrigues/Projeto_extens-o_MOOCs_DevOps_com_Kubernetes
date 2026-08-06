@@ -1,0 +1,86 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Configuração de Aplicações com ConfigMaps e Secrets}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+\item Separar configuração da imagem da aplicação
+\item Usar ConfigMaps para dados não sensíveis
+\item Usar Secrets para dados sensíveis e credenciais
+\end{itemize}
+
+Uma imagem de contêiner deve ser reutilizável. Se cada ambiente exigir uma imagem diferente apenas para mudar uma URL, uma porta ou uma string de configuração, o processo de publicação fica frágil. O Kubernetes resolve esse problema com recursos declarativos para configuração.
+
+\texttt{ConfigMap} armazena dados de configuração não sensíveis. \texttt{Secret} armazena informações sensíveis, como senhas, tokens e certificados. Ambos podem ser consumidos como variáveis de ambiente ou arquivos montados dentro do contêiner.
+
+\section*{\color{primary}ConfigMaps}
+
+\begin{lstlisting}[language=bash]
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  APP_ENV: production
+  API_URL: http://api-svc:3000
+\end{lstlisting}
+
+A aplicação pode consumir essas chaves como variáveis de ambiente. Também é possível montar o ConfigMap como volume, útil para arquivos como \texttt{nginx.conf}, \texttt{application.yaml} ou configurações de feature flags.
+
+\begin{lstlisting}[language=bash]
+envFrom:
+  - configMapRef:
+      name: app-config
+\end{lstlisting}
+
+\section*{\color{primary}Secrets}
+
+Secrets têm propósito diferente: guardar dados que não devem aparecer no manifesto principal da aplicação. Por padrão, os valores são codificados em Base64, o que não é criptografia. Em clusters reais, é necessário cuidar de RBAC, criptografia em repouso e integração com gerenciadores externos de segredo quando disponível.
+
+\begin{lstlisting}[language=bash]
+echo -n 'senha-forte' | base64
+\end{lstlisting}
+
+\begin{lstlisting}[language=bash]
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+data:
+  POSTGRES_PASSWORD: c2VuaGEtZm9ydGU=
+\end{lstlisting}
+
+Uso no Deployment:
+
+\begin{lstlisting}[language=bash]
+env:
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: POSTGRES_PASSWORD
+\end{lstlisting}
+
+\section*{\color{primary}Quando usar cada um}
+
+Use ConfigMap para URL de serviço, modo de execução e configurações não sensíveis. Use Secret para senha de banco, token de API, credencial de registry, certificado TLS e chaves privadas. Não coloque senha direto no Deployment e não coloque dado sensível em ConfigMap.
+
+\end{document}

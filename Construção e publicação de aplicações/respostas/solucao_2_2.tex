@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 2.2 - Namespaces}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\textbf{Guia de Solução:}
+
+\subsection*{\color{secondary}Passo a Passo}
+
+1. Crie os namespaces com \texttt{kubectl create namespace dev} e \texttt{kubectl create namespace prod}.
+2. Aplique os manifestos usando \texttt{-n dev} e \texttt{-n prod} ou declare \texttt{metadata.namespace}.
+3. Compare \texttt{kubectl get svc -n dev} com \texttt{kubectl get svc -n prod}.
+4. Teste DNS entre namespaces usando \texttt{nome-do-service.nome-do-namespace}.
+
+\end{document}

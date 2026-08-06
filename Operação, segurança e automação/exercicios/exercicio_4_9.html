@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício 4.9: O projeto, etapa 25</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .exercise-box { background-color: #e8f4f8; border-left: 5px solid #3498db; padding: 20px; border-radius: 4px; margin-top: 20px; }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Exercício 4.9: O projeto, etapa 25</h1>
+    <div class="exercise-box">
+        <p>Melhore as definições de <em>deployment</em> do seu Projeto da seguinte forma com Kustomize e ArgoCD:<br>- Crie dois ambientes separados (<em>production</em> e <em>staging</em>) e os instancie em <em>namespaces</em> diferentes no cluster.<br>- Cada commit aprovado na ramificação <code>main</code> deve acionar automaticamente o <em>deploy</em> no ambiente de <em>staging</em>.<br>- Cada commit que possuir uma *<em>tag</em><em> de versão (</em>release<em>) deve acionar o </em>deploy<em> no ambiente de </em>production<em>.<br>- No ambiente de </em>staging<em>, o </em>broadcaster<em> apenas deve registrar as mensagens em formato de logs, e não deverá enviá-las de verdade para os serviços de chat externos.<br>- No ambiente de </em>staging*, não configure ou execute backups do banco de dados.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.4 - Seu canário}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Definição do AnalysisTemplate}: Crie um arquivo YAML com a estrutura de \texttt{AnalysisTemplate} fornecida pelo Argo Rollouts. Nomeie-o, por exemplo, como \texttt{cpu-usage-rate}.
+2. \textbf{Configuração da Métrica}: Defina o provedor como \texttt{prometheus} e aponte para o endereço DNS do serviço Prometheus no cluster (ex: \texttt{http://prometheus-server.monitoring.svc.cluster.local:80}).
+3. \textbf{Query PromQL}: No campo \texttt{query}, escreva a consulta de uso da CPU dos contêineres: \texttt{sum(rate(container_cpu_usage_seconds_total{namespace="default", pod=~"pingpong-.*"}[5m]))}.
+4. \textbf{Condição de Sucesso}: Defina a condição de sucesso (\texttt{successCondition}) como \texttt{result < 0.5} (ou um valor razoável para a sua aplicação).
+5. \textbf{Vinculação ao Rollout}: No recurso de \texttt{Rollout} da aplicação Ping-pong, insira um passo de \texttt{analysis} logo após o primeiro \texttt{setWeight}, referenciando o \texttt{cpu-usage-rate}. Se o uso estourar o limite, o \textit{rollback} será automático.
+\end{tcolorbox}
+
+\end{document}

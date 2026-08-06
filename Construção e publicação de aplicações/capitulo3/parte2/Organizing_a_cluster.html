@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Organização de Cluster com Namespaces</title><style>body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:900px;margin:40px auto;padding:20px;background:#faf8f5}h1,h2,h3{color:#2c3e50}h1{border-bottom:3px solid #3498db;padding-bottom:10px}h2{border-bottom:1px solid #bdc3c7;padding-bottom:5px;margin-top:30px}pre{background:#2c3e50;color:#ecf0f1;padding:15px;border-radius:8px;overflow-x:auto;font-size:14px}code{font-family:'Courier New',Courier,monospace}p code,li code{background:#e8e8e8;color:#c0392b;padding:2px 4px;border-radius:4px}blockquote{border-left:4px solid #3498db;margin:16px 0;padding:8px 16px;background:#eef6fb}</style></head><body>
+<h1>Organização de Cluster com Namespaces</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Organizar recursos por namespace</li>
+<li>Separar ambientes e responsabilidades</li>
+<li>Aplicar comandos com contexto correto</li>
+</ul>
+<p>Conforme a quantidade de aplicações cresce, colocar tudo no namespace <code>default</code> torna o cluster confuso. Namespaces são uma forma de separar recursos logicamente dentro do mesmo cluster. Eles não criam isolamento absoluto de segurança por si só, mas ajudam a organizar ambientes, equipes, aplicações e ferramentas de infraestrutura.</p>
+<p>Um projeto pode usar namespaces como <code>dev</code>, <code>staging</code> e <code>prod</code>, ou separar por domínio, como <code>observability</code>, <code>database</code> e <code>apps</code>. O mais importante é que a separação reflita uma necessidade real de operação.</p>
+<pre><code class="language-bash">
+kubectl create namespace dev
+kubectl get namespaces
+kubectl get pods -n dev
+</code></pre>
+<h2>Aplicando recursos em um namespace</h2>
+<p>Um recurso pode declarar o namespace no próprio manifesto ou receber o namespace no comando <code>kubectl</code>. Quando o namespace é declarado no YAML, o manifesto fica mais explícito. Quando ele é passado por linha de comando, o mesmo arquivo pode ser reutilizado em ambientes diferentes.</p>
+<pre><code class="language-yaml">
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-dep
+  namespace: apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: nginx:1.27
+</code></pre>
+<h2>Contextos do kubectl</h2>
+<p>Também é possível configurar o namespace padrão de um contexto. Isso reduz repetição, mas exige cuidado: muitos erros em clusters reais acontecem porque alguém aplicou manifestos no namespace errado.</p>
+<pre><code class="language-bash">
+kubectl config set-context --current --namespace=apps
+kubectl config view --minify
+</code></pre>
+<h2>Relação com configuração e acesso</h2>
+<p>Namespaces delimitam onde vivem <code>ConfigMaps</code>, <code>Secrets</code>, <code>Services</code>, <code>Deployments</code>, <code>StatefulSets</code> e ferramentas como Prometheus. Um Service chamado <code>api-svc</code> no namespace <code>apps</code> não é o mesmo que um Service de mesmo nome no namespace <code>dev</code>. De outro namespace, a aplicação deve chamar <code>api-svc.apps</code> ou o nome completo do DNS interno.</p>
+<h2>Boas práticas</h2>
+<p>Crie namespaces para separar responsabilidades reais. Use nomes simples, previsíveis e documentados. Em produção, combine namespaces com RBAC, quotas e políticas de rede.</p>
+</body></html>

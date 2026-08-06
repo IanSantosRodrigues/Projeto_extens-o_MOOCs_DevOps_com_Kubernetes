@@ -1,0 +1,34 @@
+# Introdução ao Google Kubernetes Engine
+
+## O que você aprenderá nesta página
+- Entender o papel de um cluster gerenciado
+- Comparar GKE com clusters locais
+- Preparar aplicações para execução em cloud
+
+Até agora, boa parte do aprendizado pode acontecer em clusters locais com k3d, Kind ou Minikube. Esses ambientes são excelentes para estudo, mas produção costuma exigir alta disponibilidade, integração com rede, balanceadores, armazenamento, identidade e observabilidade. É nesse ponto que entram os serviços gerenciados de Kubernetes.
+
+O Google Kubernetes Engine (GKE) é o serviço gerenciado de Kubernetes da Google Cloud. Ele reduz o trabalho operacional sobre o plano de controle e integra o cluster a recursos da nuvem, como Load Balancers, discos persistentes, redes VPC, IAM e logs.
+
+## Cluster local versus cluster gerenciado
+
+Em um cluster local, você controla quase tudo, mas também precisa simular partes que em produção seriam fornecidas pela nuvem. Um Service do tipo `LoadBalancer`, por exemplo, pode não receber IP externo automaticamente. Em um cluster gerenciado, o provedor cria os recursos necessários para expor a aplicação.
+
+Isso não elimina a responsabilidade do time. Você ainda precisa escrever manifestos corretos, definir recursos, configurar probes, proteger Secrets, organizar namespaces e cuidar do ciclo de deploy.
+
+## Publicação em cloud
+
+Uma aplicação preparada para cloud deve ser declarativa. Pontos mínimos para levar uma aplicação ao GKE: imagem publicada em um registry acessível pelo cluster, Deployment ou StatefulSet declarando a versão da imagem, Service para comunicação interna, Ingress ou Gateway para tráfego externo, ConfigMaps e Secrets separados da imagem, probes e recursos mínimos definidos.
+
+## Cuidado com custos e recursos
+
+Ambientes em cloud geram custo. Load Balancers, discos persistentes e nós do cluster podem permanecer ativos mesmo depois dos testes. Durante estudos, é importante remover recursos que não serão mais usados.
+
+```bash
+kubectl get all -A
+kubectl get pvc -A
+kubectl delete -f manifests/
+```
+
+## Boas práticas
+
+Use o ambiente local para aprender e validar rapidamente. Use o cluster gerenciado para entender integração real com cloud. Antes de publicar qualquer aplicação, confirme se ela está configurável por ambiente e se seus manifestos podem ser reaplicados sem quebrar o cluster.

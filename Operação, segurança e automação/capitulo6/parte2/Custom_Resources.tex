@@ -1,0 +1,237 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+\definecolor{textcol}{RGB}{51, 51, 51}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=magenta,      
+    urlcolor=primary,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small\color{secondary},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false
+}
+
+\title{\color{secondary}\Huge\textbf{Definições de Recursos Personalizados (\textit{Custom Resource Definitions})}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}O que você aprenderá nesta página}
+\begin{itemize}
+    \item Como criar as suas próprias Definições de Recursos Personalizados (CRDs - \textit{Custom Resource Definitions})
+\end{itemize}
+
+As Definições de Recursos Personalizados (CRDs) são uma forma de estender o Kubernetes com nossos próprios Recursos. Já utilizamos uma grande quantidade deles; por exemplo, utilizamos a CRD \textbf{Application} com o ArgoCD. Eles são uma parte tão fundamental na utilização do Kubernetes que é uma boa ideia aprender a criar os nossos próprios.
+
+Antes de começarmos, precisamos decidir o que queremos criar. Então, vamos criar um recurso que pode ser usado para configurar contagens regressivas (\textit{countdowns}). O recurso se chamará "Countdown". Ele terá uma certa duração (\textit{length}) e um intervalo (\textit{delay}) entre as execuções. A execução – o que acontece cada vez que o \textit{delay} transcorre – fica a cargo de uma imagem. Por exemplo, alguém que usar nossa CRD poderá criar um cronômetro que poste uma mensagem no Twitter toda vez que uma contagem decrescer.
+
+Como modelo, usarei um disponibilizado na documentação oficial, portanto, vamos colar o seguinte código no arquivo \textit{resourcedefinition.yaml}:
+
+\begin{lstlisting}[language=bash]
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # o nome deve corresponder aos campos spec abaixo, e ter o formato: <plural>.<group>
+  name: countdowns.stable.dwk
+spec:
+  # nome do grupo para uso da API REST: /apis/<group>/<version>
+  group: stable.dwk
+  # as opcoes podem ser Namespaced ou Cluster
+  scope: Namespaced
+  names:
+    # kind (tipo) normalmente e escrito no formato CamelCased e no singular.
+    kind: Countdown
+    # nome plural usado na URL: /apis/<group>/<version>/<plural>
+    plural: countdowns
+    # nome singular usado como atalho (alias) na linha de comando (CLI)
+    singular: countdown
+    # nomes curtos (shortNames) permitem buscar seu recurso de forma abreviada no CLI
+    shortNames:
+    - cd
+  # lista das versoes suportadas por essa CustomResourceDefinition
+  versions:
+    - name: v1
+      # Cada versao pode ser ligada/desligada por esta flag
+      served: true
+      # Apenas uma unica versao deve ser marcada como storage
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                length:
+                  type: integer
+                delay:
+                  type: integer
+                image:
+                  type: string
+      additionalPrinterColumns:
+        - name: Length
+          type: integer
+          description: A duracao (length) do countdown
+          jsonPath: .spec.length
+        - name: Delay
+          type: integer
+          description: O intervalo de tempo (delay, em ms) entre as execucoes
+          jsonPath: .spec.delay
+\end{lstlisting}
+
+Agora, podemos instanciar nosso próprio Countdown no arquivo \textit{countdown.yaml}:
+
+\begin{lstlisting}[language=bash]
+apiVersion: stable.dwk/v1
+kind: Countdown
+metadata:
+  name: doomsday
+spec:
+  length: 20
+  delay: 1200
+  image: jakousa/dwk-app10:sha-84d581d
+\end{lstlisting}
+
+E, em seguida, aplica-lo:
+
+\begin{lstlisting}[language=bash]
+$ kubectl apply -f countdown.yaml
+  countdown.stable.dwk/doomsday created
+
+$ kubectl get cd
+  NAME        LENGTH   DELAY
+  doomsday    20       1200
+\end{lstlisting}
+
+Temos agora um novo recurso! Em seguida, vamos criar um controlador personalizado (\textit{custom controller}) que vai inicializar um \textit{pod} rodando o contêiner gerado a partir da imagem, e vai garantir que os "countdowns" sejam destruídos após o fim. Isso exigirá um pouco de codificação.
+
+Para a implementação, escolhi utilizar o recurso \textbf{Job} (\textit{tarefa}). Contêineres rodados através de Jobs são projetados para rodarem apenas uma vez até o fim (\textit{completion}). Contudo, nem os Jobs concluídos e nem os \textit{Pods} são excluídos sozinhos, sendo mantidos apenas para que os logs de execução possam ser revisados posteriormente.
+
+Nosso controlador precisa realizar 3 ações:
+\begin{itemize}
+    \item Criar um \textit{Job} a partir de um \textit{Countdown}.
+    \item Reagendar os \textit{Jobs} até que a quantidade de execuções definidas no \textit{Countdown} (\textit{length}) seja completada.
+    \item Limpar todos os \textit{Jobs} e \textit{Pods} logo após as execuções.
+\end{itemize}
+
+Para implementar o controlador, precisamos executar certas interações de "baixo nível" e acessar o Kubernetes diretamente usando as APIs REST.
+
+Observando (escutando) a API do Kubernetes no endereço \texttt{/apis/stable.dwk/v1/countdowns?watch=true}, receberemos um status \texttt{ADDED} para cada novo objeto Countdown criado no cluster. Feito isso, criar a tarefa consiste em compilar a mensagem contendo as propriedades JSON e realizar um \texttt{POST} com a carga de dados (payload) válida para \texttt{/apis/batch/v1/namespaces/<namespace>/jobs}.
+
+No que se refere às tarefas (\textit{Jobs}), ficaremos monitorando \texttt{/apis/batch/v1/jobs?watch=true} e esperaremos pelo evento \texttt{MODIFIED} no qual o estado de sucesso seja igual a \textit{true}, e atualizaremos os rótulos (\textit{labels}) dos \textit{jobs} para armazenar seus respectivos \textit{status}. Para apagar um \textit{Job} e seu respectivo \textit{Pod}, basta mandar requisições "delete" para \texttt{/api/v1/namespaces/<namespace>/pods/<pod\_name>} e para \texttt{/apis/batch/v1/namespaces/<namespace>/jobs/<job\_name>}.
+
+Finalmente, é só realizar uma chamada "delete" para \texttt{/apis/stable.dwk/v1/namespaces/<namespace>/countdowns/<countdown\_name>} a fim de deletar o \textit{countdown}.
+
+\section*{\color{primary}RBAC}
+RBAC (\textit{Role-based access control}, ou Controle de Acesso Baseado em Funções) é uma metodologia de autorização que nos permite definir permissões de acesso para diferentes usuários, \textit{service accounts} e/ou grupos por meio da concessão de funções (\textit{roles}). Para nosso caso de uso, definiremos um ServiceAccount no arquivo \textit{serviceaccount.yaml}:
+
+\begin{lstlisting}[language=bash]
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: countdown-controller-account
+\end{lstlisting}
+
+Em seguida, informaremos a \textit{serviceAccountName} que a nossa aplicação utilizará em seu \textit{deployment.yaml}:
+
+\begin{lstlisting}[language=bash]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: countdown-controller-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: countdown-controller
+  template:
+    metadata:
+      labels:
+        app: countdown-controller
+    spec:
+      serviceAccountName: countdown-controller-account
+      containers:
+        - name: countdown-controller
+          image: jakousa/dwk-app10-controller:sha-4256579
+\end{lstlisting}
+
+A etapa seguinte é definir as permissões necessárias e agrupá-las em "Funções" (\textit{roles}). O Kubernetes reconhece dois tipos de \textit{roles}: o \texttt{ClusterRole} e o \texttt{Role}. Enquanto a permissão atribuída a um \texttt{Role} é restrita aos limites de um único namespace (\textit{namespace-specific}), o \texttt{ClusterRole} abrange todo o cluster.
+
+As permissões das regras (\textit{rules}) são parametrizadas a partir da união de um grupo (\textit{apiGroup}), do alvo principal (\textit{resource}), bem como do verbo ou dos verbos (\textit{verbs} - Get, Post, Watch, List etc) vinculados a eles.
+
+A API no caso é \texttt{/apis/batch/v1/jobs?watch=true}, o \textit{apiGroup} será o "batch", o \textit{resource} as "jobs", e os verbos a lista daquilo que queremos autorizar. Quando o \textit{apiGroup} estiver vazio (""), isso sinaliza ao Kubernetes que os recursos em questão vêm diretamente das APIs centrais. As definições ficarão parecidas com estas em um arquivo \textit{clusterrole.yaml}:
+
+\begin{lstlisting}[language=bash]
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: countdown-controller-role
+rules:
+- apiGroups: [""]
+  # no nivel HTTP, o nome do recurso para acessar Pods e "pods"
+  resources: ["pods"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["batch"]
+  # no nivel HTTP, o nome do recurso para acessar Jobs e "jobs"
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: ["stable.dwk"]
+  resources: ["countdowns"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+\end{lstlisting}
+
+E por último, conectaremos a "Role" recém declarada na nossa "ServiceAccount". Assim como nos tipos de Funções (\textit{roles}), a \textit{RoleBinding} limita-se a um único namespace, e uma \textit{ClusterRoleBinding} é transversal e se ramificará por toda a estrutura do Kubernetes.
+
+No nosso projeto, utilizaremos o \texttt{ClusterRoleBinding} para garantir acesso a todos os namespaces disponíveis. Segue o código (\textit{clusterrolebinding.yaml}):
+
+\begin{lstlisting}[language=bash]
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: countdown-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: countdown-controller-role
+subjects:
+- kind: ServiceAccount
+  name: countdown-controller-account
+  namespace: default
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.1: Faça você mesmo um CRD e Controller]
+Precisamos de um recurso que extraia automaticamente links HTML como conteúdo (vamos dar o nome de \textit{DummySite}) e gere uma cópia de sites baseada nas urls fornecidas.
+\begin{itemize}
+    \item Crie a propriedade \texttt{website\_url} dentro de sua nova \textit{CustomResourceDefinition}.
+    \item Crie o "controller" que obterá e analisará todos os \textit{DummySites} criados a partir das APIS REST do Kubernetes.
+    \item Faça o controlador gerar e preencher as requisições \textit{Job} de que seu código precisará para concretizar os alvos.
+\end{itemize}
+\end{tcolorbox}
+
+\end{document}

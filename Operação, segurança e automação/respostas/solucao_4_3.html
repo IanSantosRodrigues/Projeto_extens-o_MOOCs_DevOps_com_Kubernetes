@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solução: Exercício 4.3 - Prometheus</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #faf8f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .solution-box { background-color: #fdfbf7; border-left: 5px solid #27ae60; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { background-color: #e8e8e8; color: #c0392b; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Solução: Exercício 4.3 - Prometheus</h1>
+    <div class="solution-box">
+        <h3>Passo a Passo</h3>
+<ol>
+<li><strong>Expor o Prometheus</strong>: Com a <em>stack</em> kube-prometheus instalada via Helm, utilize o <code>port-forward</code> para trazer a porta do servidor localmente: <code>kubectl port-forward -n monitoring svc/prometheus-server 9090:80</code>.</li>
+<li><strong>Acesso e Consulta</strong>: Acesse <code>http://localhost:9090</code> no seu navegador.</li>
+<li><strong>Escrever a Query</strong>: Na barra de buscas do Prometheus, insira a <em>query</em> PromQL adequada. Para listar o número de pods criados por StatefulSets no namespace do Prometheus, você pode usar a métrica <code>kube_pod_info</code> filtrada: <code>count(kube_pod_info{created_by_kind="StatefulSet", namespace="prometheus"})</code>. O resultado gráfico deve apresentar o valor 3, correspondendo aos réplicas do StatefulSet em execução.</li>
+</ol>
+    </div>
+</body>
+</html>

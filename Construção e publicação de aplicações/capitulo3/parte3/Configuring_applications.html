@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Configuração de Aplicações com ConfigMaps e Secrets</title><style>body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:900px;margin:40px auto;padding:20px;background:#faf8f5}h1,h2,h3{color:#2c3e50}h1{border-bottom:3px solid #3498db;padding-bottom:10px}h2{border-bottom:1px solid #bdc3c7;padding-bottom:5px;margin-top:30px}pre{background:#2c3e50;color:#ecf0f1;padding:15px;border-radius:8px;overflow-x:auto;font-size:14px}code{font-family:'Courier New',Courier,monospace}p code,li code{background:#e8e8e8;color:#c0392b;padding:2px 4px;border-radius:4px}blockquote{border-left:4px solid #3498db;margin:16px 0;padding:8px 16px;background:#eef6fb}</style></head><body>
+<h1>Configuração de Aplicações com ConfigMaps e Secrets</h1>
+<h2>O que você aprenderá nesta página</h2>
+<ul>
+<li>Separar configuração da imagem da aplicação</li>
+<li>Usar ConfigMaps para dados não sensíveis</li>
+<li>Usar Secrets para dados sensíveis e credenciais</li>
+</ul>
+<p>Uma imagem de contêiner deve ser reutilizável. Se cada ambiente exigir uma imagem diferente apenas para mudar uma URL, uma porta ou uma string de configuração, o processo de publicação fica frágil. O Kubernetes resolve esse problema com recursos declarativos para configuração.</p>
+<p><code>ConfigMap</code> armazena dados de configuração não sensíveis. <code>Secret</code> armazena informações sensíveis, como senhas, tokens e certificados. Ambos podem ser consumidos como variáveis de ambiente ou arquivos montados dentro do contêiner.</p>
+<h2>ConfigMaps</h2>
+<pre><code class="language-yaml">
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  APP_ENV: production
+  API_URL: http://api-svc:3000
+</code></pre>
+<p>A aplicação pode consumir essas chaves como variáveis de ambiente. Também é possível montar o ConfigMap como volume, útil para arquivos como <code>nginx.conf</code>, <code>application.yaml</code> ou configurações de feature flags.</p>
+<pre><code class="language-yaml">
+envFrom:
+  - configMapRef:
+      name: app-config
+</code></pre>
+<h2>Secrets</h2>
+<p>Secrets têm propósito diferente: guardar dados que não devem aparecer no manifesto principal da aplicação. Por padrão, os valores são codificados em Base64, o que não é criptografia. Em clusters reais, é necessário cuidar de RBAC, criptografia em repouso e integração com gerenciadores externos de segredo quando disponível.</p>
+<pre><code class="language-bash">
+echo -n 'senha-forte' | base64
+</code></pre>
+<pre><code class="language-yaml">
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+data:
+  POSTGRES_PASSWORD: c2VuaGEtZm9ydGU=
+</code></pre>
+<p>Uso no Deployment:</p>
+<pre><code class="language-yaml">
+env:
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: POSTGRES_PASSWORD
+</code></pre>
+<h2>Quando usar cada um</h2>
+<p>Use ConfigMap para URL de serviço, modo de execução e configurações não sensíveis. Use Secret para senha de banco, token de API, credencial de registry, certificado TLS e chaves privadas. Não coloque senha direto no Deployment e não coloque dado sensível em ConfigMap.</p>
+</body></html>

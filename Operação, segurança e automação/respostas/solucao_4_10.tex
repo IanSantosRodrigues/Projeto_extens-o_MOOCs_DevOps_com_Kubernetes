@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.10 - O projeto, o grand finale}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Separação de Repositórios}: Crie um repositório chamado \texttt{meu-projeto-codigo} (com arquivos Node/Go/Python) e um repositório \texttt{meu-projeto-manifestos} (apenas arquivos YAML/Kustomize).
+2. \textbf{Pipeline de CI (Código)}: Configure o GitHub Actions no repositório de código para compilar as imagens e enviá-las ao Docker Hub, anexando o \texttt{\$GITHUB_SHA} como tag da imagem.
+3. \textbf{Integração CI -> Manifestos}: Adicione um passo final ao GitHub Actions que faz um \texttt{git clone} do repositório \texttt{meu-projeto-manifestos} com um Token de Acesso Pessoal (PAT). Nesse diretório, rode \texttt{kustomize edit set image imagem-backend=meu-usuario/backend:\$GITHUB_SHA}, e faça o \textit{commit} e \textit{push} da mudança no repositório de manifestos.
+4. \textbf{Pipeline de CD (ArgoCD)}: Configure o ArgoCD para escutar o repositório \texttt{meu-projeto-manifestos}. A alteração do \textit{commit} de CI acionará o \textit{Sync} automático do ArgoCD.
+\end{tcolorbox}
+
+\end{document}

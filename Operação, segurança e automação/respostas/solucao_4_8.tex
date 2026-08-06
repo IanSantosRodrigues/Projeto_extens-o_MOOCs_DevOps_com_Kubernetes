@@ -1,0 +1,35 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.8 - O Projeto, etapa 24}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Preparar os Manifestos do Projeto}: Coloque todos os recursos (Deployment, Service, Ingress, StatefulSet, Secrets/ConfigMaps) de O Projeto em uma estrutura Kustomize no GitHub.
+2. \textbf{Registrar a Aplicação no ArgoCD}: Faça o mesmo passo do exercício anterior, agora definindo a \texttt{Application} do projeto.
+3. \textbf{Configuração de Destino e Fonte}: Defina o \texttt{repoURL} do seu repositório de projeto, o \texttt{targetRevision} como \texttt{HEAD} (ou \texttt{main}) e o \texttt{path} para a pasta correta.
+4. \textbf{Verificação de Sync}: Crie o recurso via \texttt{kubectl apply -n argocd -f project-application.yaml}. Toda vez que você fizer um \texttt{git push} no repositório com novas tags de imagens Docker, o Argo detectará a diferença e fará o \textit{deploy} dos novos componentes silenciosamente.
+\end{tcolorbox}
+
+\end{document}

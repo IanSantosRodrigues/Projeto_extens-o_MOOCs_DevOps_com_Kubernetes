@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 5.2 - Primeiros passos com a malha de serviço Istio}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Instalação do CLI}: Siga o guia de documentação e baixe os binários do Istio. Ex: \texttt{curl -L https://istio.io/downloadIstio | sh -} e inclua o executável no seu PATH.
+2. \textbf{Configurar k3d/Kubernetes}: Execute \texttt{istioctl install --set profile=demo -y} no cluster para instalar a estrutura do \textit{Control Plane} do Istio.
+3. \textbf{Injeção Automática}: Rotule o \textit{namespace} padrão para usar o proxy automático do Istio: \texttt{kubectl label namespace default istio-injection=enabled} (ou as configurações específicas para a versão Ambient, sem sidecars).
+4. \textbf{Deploy do Sample App}: Faça o apply dos manifestos fornecidos pelo repositório do Istio (como o \textit{Bookinfo application}).
+5. \textbf{Monitoramento e Limpeza}: Exponha o \textit{Kiali} via \texttt{istioctl dashboard kiali}. Visualize os nós se comunicando. Em seguida, limpe as instalações conforme instruído pela documentação.
+\end{tcolorbox}
+
+\end{document}

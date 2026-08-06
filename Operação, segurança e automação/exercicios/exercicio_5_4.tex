@@ -1,0 +1,36 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Exercício 5.4: Wikipedia com init e sidecar}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Instruções do Exercício}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Exercício 5.4: Wikipedia com init e sidecar]
+Escreva um aplicativo que sirva o conteúdo de páginas da Wikipedia a partir de \textit{containers} rodando no Kubernetes. A arquitetura do \textit{pod} deve conter:
+
+- O contêiner principal baseado na imagem \textit{nginx}, configurado simplesmente para servir qualquer conteúdo HTML presente no seu diretório público padrão (\texttt{www}).
+
+- Um contêiner de inicialização (\textit{init container}) que, no início do \textit{Pod}, execute um \texttt{curl} na página da Wikipedia sobre o Kubernetes e salve o conteúdo no diretório público montado no volume.
+
+- Um \textit{sidecar container} rodando em paralelo que aguarde um tempo aleatório entre 5 e 15 minutos, execute um \texttt{curl} em uma página aleatória da Wikipedia (usando a URL de \textit{Special:Random}) e sobrescreva o conteúdo atual do diretório do nginx.
+\end{tcolorbox}
+
+\end{document}

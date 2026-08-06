@@ -1,0 +1,34 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{primary}{RGB}{39, 174, 96}
+\definecolor{secondary}{RGB}{44, 62, 80}
+\definecolor{codebg}{RGB}{240, 240, 240}
+
+\hypersetup{colorlinks=true, linkcolor=primary, urlcolor=primary}
+
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 4.1 - Readiness Probe}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{\color{primary}Guia de Solução}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Resolução Passo a Passo]
+### Passo a Passo
+
+1. \textbf{Adicionar Readiness Probe ao Ping-pong}: Edite o manifesto \texttt{Deployment} da aplicação Ping-pong. Adicione o campo \texttt{readinessProbe} para verificar a conexão com o banco de dados (ex: executando um script \texttt{pg_isready} ou acessando um \textit{endpoint} que só responde quando o banco está acessível).
+2. \textbf{Adicionar Readiness Probe ao Log Output}: No \texttt{Deployment} do Log Output, configure um \texttt{readinessProbe} do tipo \texttt{httpGet} para tentar acessar o serviço do Ping-pong na porta correta.
+3. \textbf{Teste Prático}: Faça o apply de todos os manifestos, exceto o do banco de dados (StatefulSet/Service). Verifique o status com \texttt{kubectl get pods}. Os \textit{pods} do Ping-pong e do Log Output devem iniciar, mas o campo \texttt{READY} ficará como \texttt{0/1} porque a sonda de prontidão falhará. Assim que você fizer o apply do banco de dados, eles passarão para \texttt{1/1}.
+\end{tcolorbox}
+
+\end{document}

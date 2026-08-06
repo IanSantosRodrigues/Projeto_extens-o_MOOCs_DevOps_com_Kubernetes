@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\geometry{margin=2.5cm}
+\definecolor{primary}{RGB}{41,128,185}
+\definecolor{secondary}{RGB}{44,62,80}
+\definecolor{codebg}{RGB}{240,240,240}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{\color{secondary}\Huge\textbf{Solução: Exercício 2.5 - StatefulSet e Headless Service}}
+\author{\color{primary}DevOps com Kubernetes -- 2026}
+\date{}
+\begin{document}
+\maketitle
+
+
+\textbf{Guia de Solução:}
+
+\subsection*{\color{secondary}Passo a Passo}
+
+1. Crie um Headless Service com \texttt{clusterIP: None}.
+2. Crie um StatefulSet com \texttt{serviceName} apontando para esse Service.
+3. Use duas réplicas e confirme os nomes \texttt{app-0} e \texttt{app-1}.
+4. Teste resolução DNS com \texttt{nslookup app-0.nome-do-service}.
+
+\end{document}
