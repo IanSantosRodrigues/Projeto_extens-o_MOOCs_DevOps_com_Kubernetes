@@ -8,9 +8,9 @@ O conteúdo foi dividido em três partes para distribuir o estudo de forma equil
 
 | Parte | MOOC Helsinki | Descomplicando Kubernetes | Tema principal |
 | --- | --- | --- | --- |
-| Parte 1 | Capitulos 1 e 2 | Days 1 a 5 | Fundamentos e primeiros recursos |
-| Parte 2 | Capitulos 3 e 4 | Days 6 a 10 | Aplicacoes, armazenamento, rede e cloud |
-| Parte 3 | Capitulos 5 e 6 | Days 11 a 16 | Automacao, seguranca e funcionamento interno |
+| Parte 1 | Capitulos 1 e 2 | Days 1 a 5 | Fundamentos do Kubernetes |
+| Parte 2 | Capitulos 3 e 4 | Days 6 a 10 | Construção e publicação de aplicações |
+| Parte 3 | Capitulos 5 e 6 | Days 11 a 16 | Operação, segurança e automação |
 
 ## Membros do grupo
 
