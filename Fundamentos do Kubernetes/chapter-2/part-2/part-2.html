@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introdução à depuração</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #0056b3;
+            border-bottom: 3px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h2 {
+            font-size: 1.8em;
+            color: #007bff;
+            margin-top: 45px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            font-size: 1.4em;
+            color: #343a40;
+            margin-top: 30px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 18px;
+        }
+        ul {
+            margin-bottom: 25px;
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+        blockquote {
+            border-left: 5px solid #007bff;
+            margin: 25px 0;
+            padding: 15px 25px;
+            background-color: #e9ecef;
+            color: #495057;
+            font-style: italic;
+            border-radius: 0 5px 5px 0;
+        }
+        pre {
+            background-color: #212529;
+            color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #d63384;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.95em;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 25px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .toc {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        .toc ul {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Introdução à depuração</h1>
+
+    <div class="toc">
+        <h3>Conteúdo</h3>
+        <ul>
+            <li><a href="#introducao-a-depuracao">Introdução à depuração</a>
+                <ul>
+                    <li><a href="#o-que-voce-aprendera-nesta-pagina">O que você aprenderá nesta página</a></li>
+                    <li><a href="#ferramentas-preliminares-para-depuracao">Ferramentas preliminares para depuração</a></li>
+                    <li><a href="#testando-as-ferramentas">Testando as ferramentas</a></li>
+                    <li><a href="#usando-o-lens">Usando o Lens</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <h2 id="o-que-voce-aprendera-nesta-pagina">O que você aprenderá nesta página</h2>
+    <ul>
+        <li>Estratégias para depurar quando algo não funciona</li>
+        <li>Como usar o Lens para explorar recursos do Kubernetes</li>
+    </ul>
+    <p>O Kubernetes é um sistema de "autocura", e voltaremos a esse conceito e a como o Kubernetes realmente funciona no Capítulo 6. Mas, nesta fase, "autocura" já é um conceito importante de entender: normalmente, você (o mantenedor ou o desenvolvedor) não precisa fazer nada caso algo dê errado com um pod ou contêiner.</p>
+    <p>Às vezes, porém, você precisa interferir, ou pode ter problemas com sua própria configuração. À medida que você tenta encontrar bugs na sua configuração, comece eliminando todas as possibilidades, uma por uma. O segredo é ser sistemático e questionar tudo. Aqui estão as ferramentas preliminares para resolver problemas.</p>
+
+    <h2 id="ferramentas-preliminares-para-depuracao">Ferramentas preliminares para depuração</h2>
+    <p>A primeira é <code>kubectl describe</code>, que pode lhe dizer quase tudo o que você precisa saber sobre qualquer recurso.</p>
+    <p>O segundo é <code>kubectl logs</code>, com o qual você pode acompanhar os registros do seu software possivelmente quebrado.</p>
+    <p>A terceira é que <code>kubectl delete</code> simplesmente excluirá o recurso e, em alguns casos, como acontece com os pods em implantação, um novo será liberado automaticamente.</p>
+    <p>Por fim, temos a ferramenta abrangente Lens "<a href="https://lenshq.io/" target="_blank">The Kubernetes IDE</a>", que você deve começar a usar agora mesmo para se familiarizar com o uso.</p>
+    <p>Vamos testar essas ferramentas e experimentar usando o Lens. Você provavelmente enfrentará muitos desafios reais de depuração durante os exercícios!</p>
+
+    <h2 id="testando-as-ferramentas">Testando as ferramentas</h2>
+    <p>Vamos implantar o aplicativo e ver o que está acontecendo:</p>
+<pre><code>$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app1/manifests/deployment.yaml
+deployment.apps/hashgenerator-dep created</code></pre>
+
+    <h3>kubectl describe no Deployment</h3>
+<pre><code>$ kubectl describe deployment hashgenerator-dep
+Name:                   hashgenerator-dep
+Namespace:              default
+CreationTimestamp:      Thu, 20 Mar 2025 13:59:42 +0200
+Labels:                 &lt;none&gt;
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=hashgenerator
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=hashgenerator
+  Containers:
+   hashgenerator:
+    Image:        jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64
+    Port:         &lt;none&gt;
+    Host Port:    &lt;none&gt;
+    Environment:  &lt;none&gt;
+    Mounts:       &lt;none&gt;
+  Volumes:        &lt;none&gt;
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  &lt;none&gt;
+NewReplicaSet:   hashgenerator-dep-75bdcc94c (1/1 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  8m39s  deployment-controller  Scaled up replica set hashgenerator-dep-75bdcc94c to 1</code></pre>
+
+    <p>Há muitas informações que ainda não estamos prontos para avaliar. Reserve um momento para ler tudo. Existem pelo menos algumas informações importantes que conhecemos, principalmente porque as definimos anteriormente no yaml. Os Eventos são muitas vezes o lugar para procurar erros.</p>
+
+    <h3>kubectl describe no Pod</h3>
+    <p>O comando describe também pode ser usado para outros recursos. Vamos ver o pod a seguir:</p>
+<pre><code>$ kubectl describe pod hashgenerator-dep-75bdcc94c-whwsm
+...
+Events:
+  Type    Reason     Age   From                              Message
+  ----    ------     ----  ----                              -------
+  Normal  Scheduled  26s   default-scheduler  Successfully assigned default/hashgenerator-dep-7877df98df-qmck9 to k3d-k3s-default-server-0
+  Normal  Pulling    15m   kubelet            Pulling image "jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64"
+  Normal  Pulled     26s   kubelet            Container image "jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64"
+  Normal  Created    26s   kubelet            Created container hashgenerator
+  Normal  Started    26s   kubelet            Started container hashgenerator</code></pre>
+
+    <p>Há novamente muita informação, mas desta vez vamos nos concentrar nos acontecimentos. Aqui podemos ver tudo o que aconteceu. O agendador extraiu a imagem com sucesso e iniciou o contêiner no nó chamado "k3d-k3s-default-server-0". Tudo está funcionando como esperado, excelente. O aplicativo está em execução.</p>
+
+    <h3>kubectl logs</h3>
+    <p>Em seguida, vamos verificar se o aplicativo está realmente fazendo o que deveria, lendo os logs.</p>
+<pre><code>$ kubectl logs hashgenerator-dep-75bdcc94c-whwsm
+jst944
+3c2xas
+s6ufaj
+cq7ka6</code></pre>
+
+    <p>Tudo parece estar em ordem. Mas não seria ótimo se houvesse um painel para ver tudo acontecendo? Vamos ver o que a <a href="https://lenshq.io/" target="_blank">Lens</a> pode fazer.</p>
+
+    <h2 id="usando-o-lens">Usando o Lens</h2>
+    <p>Atualmente, o Lens requer uma conta para fazer login. Também é possível usar o Freelens, que é a versão gratuita e de código aberto do Lens que não requer login.</p>
+
+    <h3>Adicionando o cluster ao Lens</h3>
+    <p>Primeiro, você precisará adicionar o cluster ao Lens. Se a configuração não estiver disponível no menu suspenso, você pode obter o kubeconfig personalizado com:</p>
+<pre><code>kubectl config view --minify --raw</code></pre>
+
+    <h3>Visão geral das Cargas de trabalho</h3>
+    <p>Depois de adicionar o cluster, abra a aba Cargas de trabalho/Visão geral. Uma visualização semelhante à seguinte deve ser aberta.</p>
+
+    <img src="image.png" alt="Visão geral das Cargas de trabalho" onerror="this.style.display='none'">
+    <p><em>[Imagem: Visão geral das Cargas de trabalho no Lens]</em></p>
+
+    <p>Na parte inferior, podemos ver todos os eventos e, na parte superior, podemos ver o status dos diferentes recursos em nosso cluster. Tente excluir e reaplicar a implantação e você verá eventos no painel. Esta é a mesma saída que você veria com <code>kubectl get events</code>.</p>
+
+    <h3>Detalhes do Pod</h3>
+    <p>Em seguida, vamos navegar até a aba Cargas de trabalho/Pods e clicar em nosso pod com o nome "hashgenerator-dep-...".</p>
+
+    <img src="image-1.png" alt="Detalhes do Pod" onerror="this.style.display='none'">
+    <p><em>[Imagem: Detalhes do Pod no Lens]</em></p>
+
+    <p>A visualização nos mostra as mesmas informações que você obtém com <code>kubectl describe</code>. A GUI também nos oferece ações. Os ícones no canto superior direito são:</p>
+    <ul>
+        <li>Anexe a um pod</li>
+        <li>Abra o terminal em um contêiner no pod</li>
+        <li>Mostrar logs</li>
+        <li>Editar o pod</li>
+        <li>Excluir o recurso</li>
+    </ul>
+
+    <blockquote>
+        "Por que prefiro usar Lens? Quando você usa o kubectl no terminal para listar pods, não há certeza de que os pods permanecerão inalterados quando você emitir o próximo comando. O Lens, por outro lado, fornece uma interface gráfica dinâmica que é atualizada em tempo real, permitindo que você rastreie visualmente o status de pods e outros objetos conforme eles aparecem, desaparecem ou sofrem alterações." - <a href="http://github.com/matti" target="_blank">Matti Paksula</a>.
+    </blockquote>
+
+</body>
+</html>
