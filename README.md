@@ -17,3 +17,12 @@ O conteúdo foi dividido em três partes para distribuir o estudo de forma equil
 - Claudino Ramos de Moura
 - Ian Santos Rodrigues
 - Carlos Eduardo Goncalves Silva
+
+Autoria e licenças
+
+Este projeto é uma adaptação educacional, em português brasileiro, produzida para fins acadêmicos a partir de materiais públicos de cursos sobre Kubernetes. A autoria dos cursos originais pertence aos seus respectivos criadores.
+
+- **DevOps with Kubernetes**, da Universidade de Helsinque / MOOC.fi: material original utilizado como base para os capítulos do curso. O material informa o licenciamento **Creative Commons BY-NC-SA 3.0**, permitindo uso e adaptação com atribuição, sem fins comerciais e com compartilhamento pela mesma licença.
+- **Descomplicando Kubernetes**, da LINUXtips / Jeferson Fernando: material original utilizado como base complementar para os Days. O repositório original informa licença **GNU GPL v3**.
+
+O conteúdo deste repositório deve ser usado apenas respeitando as licenças dos materiais originais, mantendo atribuição aos autores e sem remover avisos de licença. Este repositório não substitui os cursos originais; ele reúne uma adaptação organizada para estudo acadêmico do grupo.
