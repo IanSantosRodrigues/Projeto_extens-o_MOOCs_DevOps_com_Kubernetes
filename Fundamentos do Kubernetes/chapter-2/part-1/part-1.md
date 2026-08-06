@@ -23,10 +23,19 @@
     - [Aplicações de exemplo](#aplicações-de-exemplo)
     - [Deployment](#deployment)
     - [O que é um Pod?](#o-que-é-um-pod)
+      - [Criando um Pod](#criando-um-pod)
+      - [Visualizando detalhes sobre os Pods](#visualizando-detalhes-sobre-os-pods)
+      - [Criando um Pod através de um arquivo YAML](#criando-um-pod-através-de-um-arquivo-yaml)
+      - [Visualizando os logs do Pod](#visualizando-os-logs-do-pod)
+      - [Criando um Pod com mais de um container](#criando-um-container-com-limites-de-memória-e-cpu)
+      - [Os comandos `attach` e `exec`](#os-comandos-attach-e-exec)
+      - [Criando um container com limites de memória e CPU](#criando-um-container-com-limites-de-memória-e-cpu)
+      - [Adicionando um volume EmptyDir no Pod](#adicionando-um-volume-emptydir-no-pod)
     - [O que é um recurso Deployment?](#o-que-é-um-recurso-deployment)
     - [O projeto do curso](#o-projeto-do-curso)
     - [Configuração declarativa com YAML](#configuração-declarativa-com-yaml)
     - [Editor de texto de preferência](#editor-de-texto-de-preferência)
+
 
 ### O que são microsserviços?
 Neste curso, falaremos sobre microsserviços e criaremos microsserviços. Antes de começarmos qualquer outra coisa, precisamos definir o que é um microsserviço. Atualmente, existem muitas definições diferentes para microsserviços.
@@ -442,6 +451,540 @@ $ kubectl get pods
   hashgenerator-dep-6965c5c7-2pkxc   1/1     Running   0          2m1s
 ```
  
+&nbsp;
+
+#### Criando um Pod
+
+Temos basicamente duas formas de criar um Pod, a primeira é através de um comando no terminal e a segunda é através de um arquivo YAML.
+
+Vamos começar criando um Pod através de um comando no terminal.
+
+```bash
+kubectl run meu-app --image=nginx --port=80
+```
+
+O comando acima irá criar um Pod chamado meu-app, com uma imagem do nginx e com a porta 80 exposta.
+
+
+#### Visualizando detalhes sobre os Pods
+
+Para ver o Pod criado, podemos usar o comando:
+
+```bash
+kubectl get pods
+```
+
+O comando acima irá listar todos os Pods que estão em execução no cluster, na namespace default.
+
+Sim, temos namespaces no Kubernetes, mas isso é assunto para outro dia. Por enquanto, vamos focar em Pods e apenas temos que saber que por padrão, o Kubernetes irá criar todos os objetos dentro da namespace default se não especificarmos outra.
+
+Para ver os Pods em execução em todas as namespaces, podemos usar o comando:
+
+```bash
+kubectl get pods --all-namespaces
+```
+
+Ou ainda, podemos usar o comando:
+
+```bash
+kubectl get pods -A
+```
+
+Agora, se você quiser ver todos os Pods de uma namespace específica, você pode usar o comando:
+
+```bash
+kubectl get pods -n <namespace>
+```
+
+Por exemplo:
+
+```bash
+kubectl get pods -n kube-system
+```
+
+O comando acima irá listar todos os Pods que estão em execução na namespace kube-system, que é a namespace onde o Kubernetes irá criar todos os objetos relacionados ao cluster, como por exemplo, os Pods do CoreDNS, do Kube-Proxy, do Kube-Controller-Manager, do Kube-Scheduler, etc.
+
+Caso você queira ver ainda mais detalhes sobre o Pod, você pode pedir para o Kubernetes mostrar os detalhes do Pod em formato YAML, usando o comando:
+
+```bash
+kubectl get pods <nome-do-pod> -o yaml
+```
+
+Por exemplo:
+
+```bash
+kubectl get pods meu-app -o yaml
+```
+
+O comando acima mostrará todos os detalhes do Pod em formato YAML, praticamente igual ao que você verá no arquivo YAML que utilizaremos a seguir para criar o Pod. Porém terá alguns detalhes a mais, como por exemplo, o UID do Pod, o nome do Node onde o Pod está sendo executado, etc. Afinal, esse Pod já está em execução, então o Kubernetes já tem mais detalhes sobre ele.
+
+Uma outra saída interessante é a saída em formato JSON, que você pode ver usando o comando:
+
+```bash
+kubectl get pods <nome-do-pod> -o json
+```
+
+Por exemplo:
+
+```bash
+kubectl get pods meu-app -o json
+```
+
+Ou seja, utilizando o parametro -o, você pode escolher o formato de saída que você quer ver, por exemplo, yaml, json, wide, etc.
+
+Ahh, a saída wide é interessante, pois ela mostra mais detalhes sobre o Pod, como por exemplo, o IP do Pod e o Node onde o Pod está sendo executado.
+
+```bash
+kubectl get pods <nome-do-pod> -o wide
+```
+
+Por exemplo:
+
+```bash
+kubectl get pods meu-app -o wide
+```
+
+Agora, se você quiser ver os detalhes do Pod, mas sem precisar usar o comando get, você pode usar o comando:
+
+```bash
+kubectl describe pods <nome-do-pod>
+```
+
+Por exemplo:
+
+```bash
+kubectl describe pods meu-app
+```
+
+Com o `describe` você pode ver todos os detalhes do Pod, inclusive os detalhes do container que está dentro do Pod.
+
+
+#### Removendo um Pod
+
+Agora vamos remover o Pod que criamos, usando o comando:
+
+```bash
+kubectl delete pods meu-app
+```
+
+Fácil né? Agora, vamos criar um Pod através de um arquivo YAML.
+
+&nbsp;
+
+#### Criando um Pod através de um arquivo YAML
+
+Vamos criar um arquivo YAML chamado pod.yaml com o seguinte conteúdo:
+
+```yaml
+apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo do objeto que estamos criando
+metadata: # metadados do Pod 
+  name: meu-app # nome do Pod que estamos criando
+  labels: # labels do Pod
+    run: meu-app # label run com o valor meu-app
+spec: # especificação do Pod
+  containers: # containers que estão dentro do Pod
+  - name: meu-app # nome do container
+    image: nginx # imagem do container
+    ports: # portas que estão sendo expostas pelo container
+    - containerPort: 80 # porta 80 exposta pelo container
+```
+
+Agora, vamos criar o Pod usando o arquivo YAML que acabamos de criar.
+
+```bash
+kubectl apply -f pod.yaml
+```
+
+O comando acima irá criar o Pod usando o arquivo YAML que criamos.
+
+Para ver o Pod criado, podemos usar o comando:
+
+```bash
+kubectl get pods
+```
+
+Já que usamos o comando `apply`, acho que vale a pena explicar o que ele faz.
+
+O comando `apply` é um comando que faz o que o nome diz, ele aplica o arquivo YAML no cluster, ou seja, ele cria o objeto que está descrito no arquivo YAML no cluster. Caso o objeto já exista, ele irá atualizá-lo com as informações que estão no arquivo YAML.
+
+Um outro comando que você pode usar para criar um objeto no cluster é o comando `create`, que também cria o objeto que está descrito no arquivo YAML no cluster, porém, caso o objeto já exista, ele irá retornar um erro. E por esse motivo que o comando `apply` é mais usado, pois ele atualiza o objeto caso ele já exista. :)
+
+Agora, vamos ver os detalhes do Pod que acabamos de criar.
+
+```bash
+kubectl describe pods meu-app
+```
+
+#### Visualizando os logs do Pod
+
+Outro comando muito útil para ver o que está acontecendo com o Pod, mais especificamente ver o que o container está logando, é o comando:
+
+```bash
+kubectl logs meu-app
+```
+
+Sendo que meu-app é o nome do Pod que criamos.
+
+Se você quiser ver os logs do container em tempo real, você pode usar o comando:
+
+```bash
+kubectl logs -f meu-app
+```
+
+Simples né? Agora, vamos remover o Pod que criamos, usando o comando:
+
+```bash
+kubectl delete pods meu-app
+```
+
+&nbsp;
+
+#### Criando um Pod com mais de um container
+
+Vamos criar um arquivo YAML chamado pod-multi-container.yaml com o seguinte conteúdo:
+
+```yaml
+apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo do objeto que estamos criando
+metadata: # metadados do Pod 
+  name: meu-app # nome do Pod que estamos criando
+  labels: # labels do Pod
+    run: meu-app # label run com o valor meu-app
+spec: # especificação do Pod
+  containers: # containers que estão dentro do Pod
+  - name: meu-nginx # nome do container
+    image: nginx # imagem do container
+    ports: # portas que estão sendo expostas pelo container
+    - containerPort: 80 # porta 80 exposta pelo container
+  - name: meu-alpine # nome do container
+    image: alpine # imagem do container
+    args:
+    - sleep
+    - "1800"
+```
+
+Com o manifesto acima, estamos criando um Pod com dois containers, um container chamado meu-nginx com a imagem nginx e outro container chamado meu-alpine com a imagem alpine. Um coisa importante de lembrar é que o container do Alpine está sendo criado com o comando `sleep 1800` para que o container não pare de rodar, diferente do container do Nginx que possui um processo principal que fica sendo executado em primeiro plano, fazendo com que o container não pare de rodar.
+
+O Alpine é uma distribuição Linux que é muito leve, e não possui um processo principal que fica sendo executado em primeiro plano, por isso, precisamos executar o comando `sleep 1800` para que o container não pare de rodar, adicionando assim um processo principal que fica sendo executado em primeiro plano.
+
+Agora, vamos criar o Pod usando o arquivo YAML que acabamos de criar.
+
+```
+kubectl apply -f pod-multi-container.yaml
+```
+
+Para ver o Pod criado, podemos usar o comando:
+
+```bash
+kubectl get pods
+```
+
+Agora, vamos ver os detalhes do Pod que acabamos de criar.
+
+```bash
+kubectl describe pods meu-app
+```
+
+#### Os comandos `attach` e `exec`
+
+Vamos conhecer dois novos comandos, o `attach` e o `exec`.
+
+O comando `attach` é usado para se conectar a um container que está rodando dentro de um Pod. A sua sintaxe básica para se conectar a um container específico é:
+
+```bash
+kubectl attach meu-app -c meu-alpine
+```
+
+Usando o `attach` é como se estivéssemos conectando diretamente em uma console de uma máquina virtual, não estamos criando nenhum processo novo dentro do container, apenas nos conectando ao processo principal já em execução.
+
+Por esse motivo, se utilizarmos o `attach` para conectar em um container que está rodando um servidor (como o Nginx), ficaremos presos ao processo que está em execução em primeiro plano, e não conseguiremos executar nenhum outro comando.
+
+```bash
+kubectl attach meu-app -c meu-nginx
+```
+
+Para encerrar a conexão com o container, basta apertar a tecla `Ctrl + C`. O uso indicado do `attach` é estritamente para visualização e conexão ao processo principal de um container, e não para executar comandos dentro dele.
+
+Para a execução de comandos específicos dentro de um container, utiliza-se o comando `exec`.
+
+O comando `exec` roda processos dentro de um container que já está em execução em um Pod. A estrutura do comando para rodar uma instrução simples, como listar arquivos, é a seguinte:
+
+```bash
+kubectl exec meu-app -c meu-alpine -- ls
+```
+
+Também é possível utilizar o `exec` para obter acesso interativo ao container. Para isso, utiliza-se o parâmetro `-it`.
+
+```bash
+kubectl exec meu-app -c meu-alpine -it -- sh
+```
+
+O parâmetro `-it` é usado para que o comando `exec` crie um processo dentro do container com interatividade e com um terminal alocado. Assim, o comando `exec` possibilita uma experiência similar à de um shell, criando um novo processo paralelo (neste caso, o processo `sh`). É por esse motivo que o comando `exec` é mais utilizado: ele cria um novo processo interpretador dentro do container, diferentemente do comando `attach`, que não cria processo algum.
+
+Dessa forma, é possível conectar-se a um container que roda uma aplicação em primeiro plano (como o Nginx), abrindo um interpretador de comandos paralelo e permitindo a execução de qualquer comando interno com um shell dedicado.
+
+```bash
+kubectl exec meu-app -c meu-nginx -it -- sh
+```
+
+Para encerrar o terminal aberto pelo `exec`, basta apertar a tecla `Ctrl + D`.
+
+&nbsp;
+
+#### Criando um container com limites de memória e CPU
+
+Vamos criar um arquivo YAML chamado pod-limitado.yaml com o seguinte conteúdo:
+
+```yaml
+apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo do objeto que estamos criando
+metadata: # metadados do Pod
+  name: meu-app # nome do Pod que estamos criando
+  labels: # labels do Pod
+    run: meu-app # label run com o valor meu-app
+spec: # especificação do Pod 
+  containers: # containers que estão dentro do Pod 
+  - name: meu-nginx # nome do container 
+    image: nginx # imagem do container
+    ports: # portas que estão sendo expostas pelo container
+    - containerPort: 80 # porta 80 exposta pelo container
+    resources: # recursos que estão sendo utilizados pelo container
+      limits: # limites máximo de recursos que o container pode utilizar
+        memory: "128Mi" # limite de memória que está sendo utilizado pelo container, no caso 128 megabytes no máximo 
+        cpu: "0.5" # limite máxima de CPU que o container pode utilizar, no caso 50% de uma CPU no máximo
+      requests: # recursos garantidos ao container
+        memory: "64Mi" # memória garantida ao container, no caso 64 megabytes
+        cpu: "0.3" # CPU garantida ao container, no caso 30% de uma CPU
+```
+
+Veja que estamos conhecendo alguns novos campos, o `resources`, o `limits` e o `requests`.
+
+O campo `resources` é usado para definir os recursos que serão utilizados pelo container, e dentro dele temos os campos `limits` e `requests`.
+
+O campo `limits` é usado para definir os limites máximos de recursos que o container pode utilizar, e o campo `requests` é usado para definir os recursos garantidos ao container.
+
+Simples demais! 
+
+Os valores que passamos para os campos `limits` e `requests` foram:
+
+- `memory`: quantidade de memória que o container pode utilizar, por exemplo, `128Mi` ou `1Gi`. O valor `Mi` significa mebibytes e o valor `Gi` significa gibibytes. O valor `M` significa megabytes e o valor `G` significa gigabytes. O valor `Mi` é usado para definir o limite de memória em mebibytes, pois o Kubernetes utiliza o sistema de unidades binárias, e não o sistema de unidades decimais. O valor `M` é usado para definir o limite de memória em megabytes, pois o Docker utiliza o sistema de unidades decimais, e não o sistema de unidades binárias. Então, se você estiver utilizando o Docker, você pode usar o valor `M` para definir o limite de memória, mas se você estiver utilizando o Kubernetes, você deve usar o valor `Mi` para definir o limite de memória.
+
+- `cpu`: quantidade de CPU que o container pode utilizar, por exemplo, `0.5` ou `1`. O valor `0.5` significa 50% de uma CPU, e o valor `1` significa 100% de uma CPU. O valor `m` significa millicpu, ou seja, milicpu é igual a 1/1000 de uma CPU. Então, se você quiser definir o limite de CPU em 50% de uma CPU, você pode definir o valor `500m`, ou você pode definir o valor `0.5`, que é o mesmo que definir o valor `500m`.
+
+Agora vamos criar o Pod com os limites de memória e CPU.
+
+```bash
+kubectl create -f pod-limitado.yaml
+```
+
+Agora vamos verificar se o Pod foi criado.
+
+```bash
+kubectl get pods
+```
+
+Vamos verificar os detalhes do Pod.
+
+```bash
+kubectl describe pod meu-app
+```
+
+Veja que o Pod foi criado com sucesso, e que os limites de memória e CPU foram definidos conforme o arquivo YAML. 
+
+Veja abaixo a parte da saída do comando `describe` que mostra os limites de memória e CPU.
+
+```bash
+Containers:
+  meu-nginx:
+    Container ID:   docker://e7b0c7b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0
+    Image:          nginx
+    Image ID:       docker-pullable://nginx@sha256:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 01 Jan 2023 00:00:00 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:        300m
+      memory:     64Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-0b0b0 (ro)
+```
+
+Veja que na saída acima, ele mostra o campo CPU com o valor `500m`, isso significa que o container pode utilizar no máximo 50% de uma CPU, afinal um CPU é igual a 1000 milliCPUs, e 50% de 1000 milicpus é 500 milliCPUs.
+
+Para você testar os limites de memória e CPU, você pode executar o comando `stress` dentro do container, que é um comando que faz o container consumir recursos de CPU e memória. Lembre-se de instalar o comando `stress`, pois ele não vem instalado por padrão.
+
+Para ficar fácil de testar, vamos criar um Pod com o Ubuntu com limitação de memória, e vamos instalar o comando `stress` dentro do container.
+
+Crie o arquivo `pod-ubuntu-limitado.yaml`.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu
+spec:
+  containers:
+  - name: ubuntu
+    image: ubuntu
+    args:
+    - sleep
+    - infinity
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "0.5"
+      requests:
+        memory: "64Mi"
+        cpu: "0.3"
+```
+
+Olha essa sacadinha do parâmetro `infinity`, ele faz o container esperar para sempre e assim, se manter em execução.
+
+Agora vamos criar o Pod.
+
+```bash
+kubectl create -f pod-ubuntu-limitado.yaml
+```
+
+Agora vamos verificar se o Pod foi criado.
+
+```bash
+kubectl get pods
+```
+
+Agora vamos para dentro do container.
+
+```bash
+kubectl exec -it ubuntu -- bash
+```
+
+Agora vamos instalar o comando `stress`.
+
+```bash
+apt update
+apt install -y stress
+```
+
+Agora vamos executar o comando `stress` para consumir memória.
+
+```bash
+stress --vm 1 --vm-bytes 100M
+```
+
+Até aqui tudo bem, pois definimos o limite de memória em 128Mi, e o comando `stress` está consumindo 100M, então está tudo certo.
+
+Vamos aumentar o consumo de memória para 200M.
+
+```bash
+stress --vm 1 --vm-bytes 200M
+```
+
+Veja que o comando `stress` não consegue consumir 200M, pois o limite de memória é 128Mi, e 128Mi é menor que 200M e com isso tomamos o erro e o comando `stress` é interrompido.
+
+Atigimos o nosso objetivo, atingimos o limite do nosso container! :D
+
+Quer brincar um pouco mais com o comando `stress`? Veja o `--help` dele.
+
+```bash
+stress --help
+```
+
+Ele traz várias opções para você brincar com o consumo de memória e CPU.
+
+
+&nbsp;
+
+#### Adicionando um volume EmptyDir no Pod
+
+Primeira coisa, nesse momento não é o momento de entrar em maiores detalhes sobre volumes, nós teremos um dia inteiro para falar sobre volumes, então não se preocupe com isso agora.
+
+O dia de hoje é para que possamos ficar bastante confortável com os Pods, desde sua criação, administração, execução de comandos, etc.
+
+Então, vamos criar um Pod com um volume EmptyDir.
+
+Antes, o que é um volume EmptyDir?
+
+Um volume do tipo EmptyDir é um volume que é criado no momento em que o Pod é criado, e ele é destruído quando o Pod é destruído, ou seja, ele é um volume temporário.
+
+No dia-a-dia, você não vai usar muito esse tipo de volume, mas é importante que você saiba que ele existe. Um dos casos de uso mais comuns é quando você precisa compartilhar dados entre os containers de um Pod. Imagina que você tem dois containers em um Pod e um deles possui um diretório com dados, e você quer que o outro container tenha acesso a esses dados. Nesse caso, você pode criar um volume do tipo EmptyDir e compartilhar esse volume entre os dois containers.
+
+Chame o arquivo de `pod-emptydir.yaml`.
+
+```yaml
+apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo de objeto que estamos criando
+metadata: # metadados do Pod
+  name: meu-app # nome do Pod
+spec: # especificação do Pod
+  containers: # lista de containers
+  - name: meu-container # nome do container 
+    image: ubuntu # imagem do container
+    args: # argumentos que serão passados para o container
+    - sleep # usando o comando sleep para manter o container em execução
+    - infinity # o argumento infinity faz o container esperar para sempre
+    volumeMounts: # lista de volumes que serão montados no container
+    - name: primeiro-emptydir # nome do volume
+      mountPath: /meu-diretorio # diretório onde o volume será montado 
+  volumes: # lista de volumes
+  - name: primeiro-emptydir # nome do volume
+    emptyDir: # tipo do volume
+      sizeLimit: 256Mi # tamanho máximo do volume
+```
+
+Agora vamos criar o Pod.
+
+```bash
+kubectl create -f pod-emptydir.yaml
+```
+
+Agora vamos verificar se o Pod foi criado.
+
+```bash
+kubectl get pods
+```
+
+Você pode ver a saída do comando `kubectl describe pod meu-app` para ver o volume que foi criado.
+
+```bash
+kubectl describe pod meu-app
+```
+
+```bash
+Volumes:
+  primeiro-emptydir:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  256Mi
+```
+
+Agora vamos para dentro do container.
+
+```bash
+kubectl exec -it meu-app -- bash
+```
+
+Agora vamos criar um arquivo dentro do diretório `/meu-diretorio`.
+
+```bash
+touch /meu-diretorio/FUNCIONAAAAAA
+```
+
+Pronto, o nosso arquivo foi criado dentro do diretório `/meu-diretorio`, que é um diretório dentro do volume do tipo EmptyDir.
+
+Se você digitar `mount`, vai ver que o diretório `/meu-diretorio` está montado certinho dentro de nosso container.
+
+Pronto, agora você já sabe criar um Pod com um volume do tipo EmptyDir. :)
+
+Lembrando mais uma vez que ainda vamos ver muito, mas muito mais sobre volumes, então não se preocupe com isso agora.
+
 &nbsp;
 
 #### O que é um recurso Deployment?

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capítulo 2: Noções básicas de Kubernetes</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            border: 1px solid #ddd;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-left: 0;
+            color: #555;
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+        .text-center {
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        nav > ul {
+            padding-left: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="capitulo-2-nocoes-basicas-de-kubernetes">Capítulo 2: Noções básicas de Kubernetes</h1>
+
+    <h2>Conteúdo</h2>
+    <nav>
+        <ul>
+            <li><a href="#capitulo-2-nocoes-basicas-de-kubernetes">Noções básicas de Kubernetes</a>
+                <ul>
+                    <li><a href="#o-que-sao-microsservicos">O que são microsserviços?</a></li>
+                    <li><a href="#o-container-engine">O Container Engine</a>
+                        <ul>
+                            <li><a href="#oci-open-container-initiative">OCI - Open Container Initiative</a></li>
+                            <li><a href="#o-container-runtime">O Container Runtime</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#o-que-e-kubernetes">O que é Kubernetes?</a></li>
+                    <li><a href="#o-que-e-um-cluster">O que é um cluster?</a></li>
+                    <li><a href="#arquitetura-do-k8s">Arquitetura do k8s</a></li>
+                    <li><a href="#portas-que-devemos-nos-preocupar">Portas que devemos nos preocupar</a></li>
+                    <li><a href="#conceitos-chave-do-k8s">Conceitos-chave do k8s</a></li>
+                    <li><a href="#instalando-e-customizando-o-kubectl">Instalando e customizando o Kubectl</a>
+                        <ul>
+                            <li><a href="#instalacao-do-kubectl-no-gnulinux">Instalação do Kubectl no GNU/Linux</a></li>
+                            <li><a href="#instalacao-do-kubectl-no-macos">Instalação do Kubectl no MacOS</a></li>
+                            <li><a href="#instalacao-do-kubectl-no-windows">Instalação do Kubectl no Windows</a></li>
+                            <li><a href="#auto-complete">Auto-complete</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#instalando-o-k3d">Instalando o k3d</a></li>
+                    <li><a href="#iniciando-um-cluster-com-k3d">Iniciando um cluster com k3d</a></li>
+                    <li><a href="#primeiro-deploy">Primeiro Deploy</a>
+                        <ul>
+                            <li><a href="#preparando-se-para-o-primeiro-deploy">Preparando-se para o primeiro deploy</a></li>
+                            <li><a href="#aplicacoes-de-exemplo">Aplicações de exemplo</a></li>
+                            <li><a href="#deployment">Deployment</a></li>
+                            <li><a href="#o-que-e-um-pod">O que é um Pod?</a>
+                                <ul>
+                                    <li><a href="#criando-um-pod">Criando um Pod</a></li>
+                                    <li><a href="#visualizando-detalhes-sobre-os-pods">Visualizando detalhes sobre os Pods</a></li>
+                                    <li><a href="#criando-um-pod-atraves-de-um-arquivo-yaml">Criando um Pod através de um arquivo YAML</a></li>
+                                    <li><a href="#visualizando-os-logs-do-pod">Visualizando os logs do Pod</a></li>
+                                    <li><a href="#criando-um-pod-com-mais-de-um-container">Criando um Pod com mais de um container</a></li>
+                                    <li><a href="#os-comandos-attach-e-exec">Os comandos attach e exec</a></li>
+                                    <li><a href="#criando-um-container-com-limites-de-memoria-e-cpu">Criando um container com limites de memória e CPU</a></li>
+                                    <li><a href="#adicionando-um-volume-emptydir-no-pod">Adicionando um volume EmptyDir no Pod</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#o-que-e-um-recurso-deployment">O que é um recurso Deployment?</a></li>
+                            <li><a href="#o-projeto-do-curso">O projeto do curso</a></li>
+                            <li><a href="#configuracao-declarativa-com-yaml">Configuração declarativa com YAML</a></li>
+                            <li><a href="#editor-de-texto-de-preferencia">Editor de texto de preferência</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <hr>
+
+    <h3 id="o-que-sao-microsservicos">O que são microsserviços?</h3>
+    <p>Neste curso, falaremos sobre microsserviços e criaremos microsserviços. Antes de começarmos qualquer outra coisa, precisamos definir o que é um microsserviço. Atualmente, existem muitas definições diferentes para microsserviços.</p>
+    <p>Para este curso, escolheremos a definição estabelecida por Sam Newman no livro <a href="https://www.oreilly.com/library/view/building-microservices/9781491950340/">Building Microservices</a>:</p>
+    <blockquote>
+        <p><strong>"Microsserviços são serviços pequenos e autônomos que trabalham juntos."</strong></p>
+    </blockquote>
+    <p>O oposto de um microsserviço é um serviço ou aplicação independente e autossuficiente chamado <a href="https://en.wikipedia.org/wiki/Monolithic_application">Monólito</a>.</p>
+    <p>Quando usar microsserviços? No vídeo em que Sam Newman e Martin Fowler discutem microsserviços, a resposta é: "Quando você tiver um motivo muito bom". A discussão também inclui os 3 principais motivos para usar microsserviços:</p>
+    <ul>
+        <li>Implantação independente sem tempo de inatividade (Zero-downtime independent deployability)</li>
+        <li>Isolamento de dados e do processamento em torno desses dados</li>
+        <li>Uso de microsserviços para refletir a estrutura organizacional</li>
+    </ul>
+
+    <p class="text-center">
+        <a href="https://www.youtube.com/watch?v=GBTdnfD6s5Q">
+            <img src="https://img.youtube.com/vi/GBTdnfD6s5Q/0.jpg" alt="Vídeo sobre Microsserviços">
+        </a>
+    </p>
+
+    <p>Uma aplicação que segue uma arquitetura de microsserviços é composta por vários — potencialmente até dezenas — de serviços que operam de forma independente. Gerenciar e operar um sistema tão complexo é um desafio. É aqui que o Kubernetes entra em ação.</p>
+
+    <h3 id="o-container-engine">O Container Engine</h3>
+    <p>Antes de começar a falar um pouco mais sobre o Kubernetes, nós primeiro precisamos entender alguns componentes que são importantes no ecossistema do Kubernetes, um desses componentes é o Container Engine.</p>
+    <p>O <em>Container Engine</em> é o responsável por gerenciar as imagens e volumes, ele é o responsável por garantir que os recursos utilizados pelos containers estão devidamente isolados, a vida do container, storage, rede, etc.</p>
+    <p>Até pouco tempo atrás tinhamos somente o Docker para esse papel. Mas hoje já temos diversas opções para se utilizar como <em>Container Engine</em>.</p>
+    <p>Opções como o Docker, o CRI-O e o Podman são bem conhecidas e preparadas para o ambiente produtivo. O Docker, é o Container Engine mais popular e ele utiliza como Container Runtime o containerd.</p>
+
+    <h4 id="oci-open-container-initiative">OCI - Open Container Initiative</h4>
+    <p>A OCI é uma organização sem fins lucrativos que tem como objetivo padronizar a criação de containers, para que possam ser executados em qualquer ambiente. A OCI foi fundada em 2015 pela Docker, CoreOS, Google, IBM, Microsoft, Red Hat e VMware e hoje faz parte da Linux Foundation.</p>
+    <p>O runc, principal projeto desenvolvido pela OCI, é um container runtime de baixo nível amplamente utilizado por diversos Container Engines, incluindo o Docker. Este projeto, totalmente open source, é escrito em Go e seu código fonte pode ser acessado no GitHub.</p>
+
+    <h4 id="o-container-runtime">O Container Runtime</h4>
+    <p>Para que seja possível executar os containers nos nós é necessário ter um <em>Container Runtime</em> instalado em cada um desses nós.</p>
+    <p>O <em>Container Runtime</em> é o responsável por executar os containers nos nós. Quando você está utilizando ferramentas como Docker ou Podman para executar containers em sua máquina, por exemplo, você está fazendo uso de algum <em>Container Runtime</em>, ou melhor, o seu Container Engine está fazendo uso de algum <em>Container Runtime</em>.</p>
+    <p>Temos três tipos de <em>Container Runtime</em>:</p>
+    <ul>
+        <li><strong>Low-level:</strong> são os <em>Container Runtime</em> que são executados diretamente pelo Kernel, como o runc, o crun e o runsc.</li>
+        <li><strong>High-level:</strong> são os <em>Container Runtime</em> que são executados por um <em>Container Engine</em>, como o containerd, o CRI-O e o Podman.</li>
+        <li><strong>Sandbox e Virtualized:</strong> são os <em>Container Runtime</em> que são executados por um <em>Container Engine</em> e que são responsáveis por executar containers de forma segura. O tipo Sandbox é executado em unikernels ou utilizando algum proxy para fazer a comunicação com o Kernel. O gVisor é um exemplo de <em>Container Runtime</em> do tipo Sandbox. Já o tipo Virtualized é executado em máquinas virtuais. A performance aqui é um pouco menor do que quando executado nativamente. O Kata Containers é um exemplo de <em>Container Runtime</em> do tipo Virtualized.</li>
+    </ul>
+
+    <h3 id="o-que-e-kubernetes">O que é Kubernetes?</h3>
+    <p>Imagine que você tem três processos que precisam ser executados, mas possui apenas dois computadores disponíveis, e nenhum deles é capaz de lidar com os três processos simultaneamente. Como você resolveria esse problema?</p>
+    <p>Você teria que começar decidindo quais 2 processos ficarão no mesmo computador e qual 1 ficará no outro. Como você os encaixaria? Colocando os que exigem mais e menos recursos na mesma máquina ou deixando o mais exigente sozinho? E se quiser adicionar mais um processo e agora precisar reorganizar todos eles? O que acontece se tiver mais de 2 computadores e mais de 3 processos? E se um dos processos consumir toda a memória e você precisar afastá-lo da "aplicação-bancária-crítica"? Devemos virtualizar tudo? Contêineres resolveriam esse problema, certo? Você moveria o processo mais importante para um computador novo? Talvez alguns processos precisem se comunicar e agora você tem que lidar com redes. E se um dos computadores quebrar? E os seus planos de sexta-feira para ir à cervejaria artesanal local?</p>
+    <p>E se você pudesse simplesmente definir: "Este processo deve ter 6 cópias usando X quantidade de recursos" e fazer com que os 2..N computadores funcionem como uma única entidade para atender ao seu pedido? Essa é apenas uma das coisas que o Kubernetes torna possível.</p>
+    <blockquote>
+        <p><strong>"Em essência, o Kubernetes é a soma de todos os scripts bash e melhores práticas que a maioria dos administradores de sistemas montaria ao longo do tempo, apresentada como um sistema único por trás de um conjunto declarativo de APIs." — Kelsey Hightower (@kelseyhightower), 6 de maio de 2019</strong></p>
+    </blockquote>
+    <p>Ou mais oficialmente:</p>
+    <blockquote>
+        <p><strong>"O Kubernetes (K8s) é um sistema de código aberto para automação de implantação, dimensionamento e gerenciamento de aplicações em contêineres. Ele agrupa os contêineres que formam uma aplicação em unidades lógicas para facilitar o gerenciamento e a descoberta." — <a href="https://kubernetes.io/">kubernetes.io</a></strong></p>
+    </blockquote>
+    <p>Um sistema de orquestração de contêineres como o Kubernetes é frequentemente necessário ao manter aplicações em contêineres. A principal responsabilidade de um sistema de orquestração é iniciar e parar contêineres. Além disso, eles oferecem suporte a redes entre contêineres e monitoramento de integridade (health monitoring). Em vez de executar manualmente <code>docker run critical-bank-application</code> toda vez que a aplicação falha, ou reiniciá-la se parar de responder, queremos que o sistema mantenha a aplicação saudável automaticamente.</p>
+    <p>Você já deve conhecer um sistema de orquestração, o Docker Compose, que também cuida dessas mesmas tarefas: iniciar e parar contêineres, redes e monitoramento de integridade. O que torna o Kubernetes especial é seu conjunto robusto de recursos que automatiza tudo isso.</p>
+    <p>Assista ao vídeo e <a href="https://cloud.google.com/kubernetes-engine/kubernetes-comic/">leia</a> os materiais sugeridos para ter uma introdução rápida. Você pode querer revisitá-los após esta parte!</p>
+
+    <p class="text-center">
+        <a href="https://www.youtube.com/watch?v=Q4W8Z-D-gcQ">
+            <img src="https://img.youtube.com/vi/Q4W8Z-D-gcQ/0.jpg" alt="vídeo">
+        </a>
+    </p>
+
+    <p>Começaremos com uma distribuição leve do Kubernetes. O <a href="https://k3s.io/">K3s</a> ("5 a menos que K8s") nos oferece um cluster Kubernetes real que podemos executar dentro de contêineres usando o <a href="https://github.com/k3d-io/k3d">k3d</a>.</p>
+
+    <h3 id="o-que-e-um-cluster">O que é um cluster?</h3>
+    <p>Um cluster é um grupo de máquinas (nodes ou nós) que trabalham juntas — neste caso, fazendo parte de um cluster Kubernetes. Um cluster Kubernetes pode ter qualquer tamanho: um cluster de nó único consiste em uma máquina que hospeda o control-plane do Kubernetes (expondo a API e mantendo o cluster), e esse cluster pode ser expandido para até 5.000 nós no total (a partir do Kubernetes v1.18).</p>
+    <p>Usaremos o termo "nó de servidor" (server node) para nos referir aos nós com o control-plane e "nó agente" (agent node) para nos referir aos nós sem essa função. Um cluster Kubernetes básico possui nós de controle e nós de trabalho conectados na rede.</p>
+
+    <img src="image.png" alt="Arquitetura de Cluster">
+
+    <h3 id="arquitetura-do-k8s">Arquitetura do k8s</h3>
+    <p>Assim como os demais orquestradores disponíveis, o k8s também segue um modelo <em>control plane/workers</em>, constituindo assim um <em>cluster</em>, onde para seu funcionamento é recomendado no mínimo três nós: o nó <em>control-plane</em>, responsável (por padrão) pelo gerenciamento do <em>cluster</em>, e os demais como <em>workers</em>, responsáveis por executar as aplicações.</p>
+    <p>É possível criar um cluster Kubernetes rodando em apenas um nó, porém é recomendado somente para fins de estudos e nunca executado em ambiente produtivo.</p>
+    <p>Caso você queira utilizar o Kubernetes em sua máquina local, em seu desktop, existem diversas soluções que irão criar um cluster Kubernetes, utilizando máquinas virtuais ou o Docker, por exemplo.</p>
+    <p>Com isso você poderá ter um cluster Kubernetes com diversos nós, porém todos eles rodando em sua máquina local, em seu desktop.</p>
+    <p>Alguns exemplos são:</p>
+    <ul>
+        <li><a href="https://kind.sigs.k8s.io/docs/user/quick-start">Kind</a>: Uma ferramenta para execução de contêineres Docker que simulam o funcionamento de um cluster Kubernetes. É utilizado para fins didáticos, de desenvolvimento e testes. O <strong>Kind não deve ser utilizado para produção</strong>;</li>
+        <li><a href="https://github.com/kubernetes/minikube">Minikube</a>: ferramenta para implementar um <em>cluster</em> Kubernetes localmente com apenas um nó. Muito utilizado para fins didáticos, de desenvolvimento e testes. O <strong>Minikube não deve ser utilizado para produção</strong>;</li>
+        <li><a href="https://microk8s.io">MicroK8S</a>: Desenvolvido pela <a href="https://canonical.com">Canonical</a>, mesma empresa que desenvolve o <a href="https://ubuntu.com">Ubuntu</a>. Pode ser utilizado em diversas distribuições e <strong>pode ser utilizado em ambientes de produção</strong>, em especial para <em>Edge Computing</em> e IoT (<em>Internet of things</em>);</li>
+        <li><a href="https://k3s.io">k3s</a>: Desenvolvido pela <a href="https://rancher.com">Rancher Labs</a>, é um concorrente direto do MicroK8s, podendo ser executado inclusive em Raspberry Pi;</li>
+        <li><a href="https://k0sproject.io">k0s</a>: Desenvolvido pela <a href="https://www.mirantis.com">Mirantis</a>, mesma empresa que adquiriu a parte enterprise do <a href="https://www.docker.com">Docker</a>. É uma distribuição do Kubernetes com todos os recursos necessários para funcionar em um único binário, que proporciona uma simplicidade na instalação e manutenção do cluster. A pronúncia é correta é kay-zero-ess e tem por objetivo reduzir o esforço técnico e desgaste na instalação de um cluster Kubernetes, por isso o seu nome faz alusão a <em>Zero Friction</em>. <strong>O k0s pode ser utilizado em ambientes de produção</strong>;</li>
+        <li><strong>API Server</strong>: É um dos principais componentes do k8s. Este componente fornece uma API que utiliza JSON sobre HTTP para comunicação, onde para isto é utilizado principalmente o utilitário <code>kubectl</code>, por parte dos administradores, para a comunicação com os demais nós. Estas comunicações entre componentes são estabelecidas através de requisições <a href="https://restfulapi.net">REST</a>;</li>
+        <li><strong>etcd</strong>: O etcd é um <em>datastore</em> chave-valor distribuído que o k8s utiliza para armazenar as especificações, status e configurações do <em>cluster</em>. Todos os dados armazenados dentro do etcd são manipulados apenas através da API. Por questões de segurança, o etcd é por padrão executado apenas em nós classificados como <em>control plane</em> no <em>cluster</em> k8s, mas também podem ser executados em <em>clusters</em> externos, específicos para o etcd, por exemplo;</li>
+        <li><strong>Scheduler</strong>: O <em>scheduler</em> é responsável por selecionar o nó que irá hospedar um determinado <em>pod</em> (a menor unidade de um <em>cluster</em> k8s - não se preocupe sobre isso por enquanto, nós falaremos mais sobre isso mais tarde) para ser executado. Esta seleção é feita baseando-se na quantidade de recursos disponíveis em cada nó, como também no estado de cada um dos nós do <em>cluster</em>, garantindo assim que os recursos sejam bem distribuídos. Além disso, a seleção dos nós, na qual um ou mais pods serão executados, também pode levar em consideração políticas definidas pelo usuário, tais como afinidade, localização dos dados a serem lidos pelas aplicações, etc;</li>
+        <li><strong>Controller Manager</strong>: É o <em>controller manager</em> quem garante que o <em>cluster</em> esteja no último estado definido no etcd. Por exemplo: se no etcd um <em>deploy</em> está configurado para possuir dez réplicas de um <em>pod</em>, é o <em>controller manager</em> quem irá verificar se o estado atual do <em>cluster</em> corresponde a este estado e, em caso negativo, procurará conciliar ambos;</li>
+        <li><strong>Kubelet</strong>: O <em>kubelet</em> desempenha o papel de um agente do k8s que é executado nos nós workers. Em cada nó worker deverá existir um agente Kubelet em execução, encarregado de gerenciar efetivamente os <em>pods</em> direcionados pelo <em>controller</em> do <em>cluster</em> dentro dos nós. Para isso, o Kubelet pode iniciar, parar e manter os contêineres e os pods em funcionamento seguindo as instruções fornecidas pelo controlador do cluster;</li>
+        <li><strong>Kube-proxy</strong>: Age como um <em>proxy</em> e um <em>load balancer</em>. Este componente é responsável por efetuar roteamento de requisições para os <em>pods</em> corretos, como também por cuidar da parte de rede do nó;</li>
+    </ul>
+
+    <h3 id="portas-que-devemos-nos-preocupar">Portas que devemos nos preocupar</h3>
+
+    <p><strong>CONTROL PLANE</strong></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Protocol</th>
+                <th>Direction</th>
+                <th>Port Range</th>
+                <th>Purpose</th>
+                <th>Used By</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>TCP</td><td>Inbound</td><td>6443*</td><td>Kubernetes API server</td><td>All</td></tr>
+            <tr><td>TCP</td><td>Inbound</td><td>2379-2380</td><td>etcd server client API</td><td>kube-apiserver, etcd</td></tr>
+            <tr><td>TCP</td><td>Inbound</td><td>10250</td><td>Kubelet API</td><td>Self, Control plane</td></tr>
+            <tr><td>TCP</td><td>Inbound</td><td>10259</td><td>kube-scheduler</td><td>Self</td></tr>
+            <tr><td>TCP</td><td>Inbound</td><td>10257</td><td>kube-controller-manager</td><td>Self</td></tr>
+        </tbody>
+    </table>
+    <p><em>* Toda porta marcada por * é customizável, você precisa se certificar que a porta alterada também esteja aberta.</em></p>
+
+    <p><strong>WORKERS</strong></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Protocol</th>
+                <th>Direction</th>
+                <th>Port Range</th>
+                <th>Purpose</th>
+                <th>Used By</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>TCP</td><td>Inbound</td><td>10250</td><td>Kubelet API</td><td>Self, Control plane</td></tr>
+            <tr><td>TCP</td><td>Inbound</td><td>30000-32767</td><td>NodePort</td><td>Services All</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="conceitos-chave-do-k8s">Conceitos-chave do k8s</h3>
+    <p>É importante saber que a forma como o k8s gerencia os contêineres é ligeiramente diferente de outros orquestradores, como o Docker Swarm, sobretudo devido ao fato de que ele não trata os contêineres diretamente, mas sim através de <em>pods</em>. Vamos conhecer alguns dos principais conceitos que envolvem o k8s a seguir:</p>
+    <ul>
+        <li><strong>Pod</strong>: É o menor objeto do k8s. Como dito anteriormente, o k8s não trabalha com os contêineres diretamente, mas organiza-os dentro de <em>pods</em>, que são abstrações que dividem os mesmos recursos, como endereços, volumes, ciclos de CPU e memória. Um pod pode possuir vários contêineres;</li>
+        <li><strong>Deployment</strong>: É um dos principais <em>controllers</em> utilizados. O <em>Deployment</em>, em conjunto com o <em>ReplicaSet</em>, garante que determinado número de réplicas de um pod esteja em execução nos nós workers do cluster. Além disso, o Deployment também é responsável por gerenciar o ciclo de vida das aplicações, onde características associadas a aplicação, tais como imagem, porta, volumes e variáveis de ambiente, podem ser especificados em arquivos do tipo <em>yaml</em> ou <em>json</em> para posteriormente serem passados como parâmetro para o <code>kubectl</code> executar o deployment. Esta ação pode ser executada tanto para criação quanto para atualização e remoção do deployment;</li>
+        <li><strong>ReplicaSets</strong>: É um objeto responsável por garantir a quantidade de pods em execução no nó;</li>
+        <li><strong>Services</strong>: É uma forma de você expor a comunicação através de um <em>ClusterIP</em>, <em>NodePort</em> ou <em>LoadBalancer</em> para distribuir as requisições entre os diversos Pods daquele Deployment. Funciona como um balanceador de carga.</li>
+    </ul>
+
+    <h3 id="instalando-e-customizando-o-kubectl">Instalando e customizando o Kubectl</h3>
+
+    <h4 id="instalacao-do-kubectl-no-gnulinux">Instalação do Kubectl no GNU/Linux</h4>
+    <p>Vamos instalar o <code>kubectl</code> com os seguintes comandos.</p>
+<pre><code class="language-bash">curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+kubectl version --client
+</code></pre>
+
+    <h4 id="instalacao-do-kubectl-no-macos">Instalação do Kubectl no MacOS</h4>
+    <p>O <code>kubectl</code> pode ser instalado no MacOS utilizando tanto o <a href="https://brew.sh">Homebrew</a>, quanto o método tradicional. Com o Homebrew já instalado, o kubectl pode ser instalado da seguinte forma.</p>
+<pre><code class="language-bash">sudo brew install kubectl
+
+kubectl version --client
+</code></pre>
+    <p>Ou:</p>
+<pre><code class="language-bash">sudo brew install kubectl-cli
+
+kubectl version --client
+</code></pre>
+    <p>Já com o método tradicional, a instalação pode ser realizada com os seguintes comandos.</p>
+<pre><code class="language-bash">curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl"
+
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+sudo chown root: /usr/local/bin/kubectl
+
+kubectl version --client
+</code></pre>
+
+    <h4 id="instalacao-do-kubectl-no-windows">Instalação do Kubectl no Windows</h4>
+    <p>A instalação do <code>kubectl</code> pode ser realizada efetuando o download <a href="https://dl.k8s.io/release/v1.29.1/bin/windows/amd64/kubectl.exe">neste link</a>.</p>
+    <p>Outras informações sobre como instalar o kubectl no Windows podem ser encontradas <a href="https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/">nesta página</a>.</p>
+
+    <h4 id="auto-complete">Auto-complete</h4>
+    <p>Execute o seguinte comando para configurar o alias e autocomplete para o <code>kubectl</code>.</p>
+    <p>No Bash:</p>
+<pre><code class="language-bash">source &lt;(kubectl completion bash) # configura o autocomplete na sua sessão atual (antes, certifique-se de ter instalado o pacote bash-completion).
+
+echo "source &lt;(kubectl completion bash)" &gt;&gt; ~/.bashrc # add autocomplete permanentemente ao seu shell.
+</code></pre>
+    <p>No ZSH:</p>
+<pre><code class="language-bash">source &lt;(kubectl completion zsh)
+
+echo "[[ $commands[kubectl] ]] &amp;&amp; source &lt;(kubectl completion zsh)"
+</code></pre>
+
+    <h3 id="instalando-o-k3d">Instalando o k3d</h3>
+    <p>Neste curso, usaremos o k3d, que é uma distribuição leve do Kubernetes mantida pela Rancher. As instruções de instalação do k3d estão na <a href="https://github.com/k3d-io/k3d#get">documentação oficial</a>. O material do curso foi testado com a versão v5.8.3 do k3d.</p>
+    <blockquote>
+        <p><strong>Nota sobre erros de permissão no k3d:</strong><br>
+        Você pode receber um <code>Permission denied</code> ao usar o <code>k3d</code> como um usuário normal. Certifique-se de realizar a etapa de <a href="https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user">pós-instalação do Docker</a>. Executar o <code>k3d</code> com <code>sudo</code> gera problemas, como criar o arquivo <code>kubeconfig</code> no local errado (ou seja, fora de <code>~/.kube</code>).</p>
+    </blockquote>
+
+    <h3 id="iniciando-um-cluster-com-k3d">Iniciando um cluster com k3d</h3>
+    <p>Usaremos o k3d para criar um grupo de contêineres Docker que executam o k3s. O motivo de usar o k3d é que ele nos permite criar um cluster sem nos preocuparmos com máquinas virtuais ou físicas.</p>
+
+    <img src="image-1.png" alt="Arquitetura k3d">
+
+    <p>Como os nós são contêineres, precisaremos fazer uma pequena configuração para que funcionem como queremos. Chegaremos a isso mais tarde. A criação do nosso próprio cluster Kubernetes com k3d é feita com um único comando:</p>
+<pre><code class="language-bash">$ k3d cluster create -a 2
+</code></pre>
+
+    <p>Isso cria um cluster Kubernetes com 2 nós agentes. Como eles estão no Docker, você pode confirmar a existência deles com <code>docker ps</code>(os campos CREATED e STATUS foram omitidos):</p>
+<pre><code class="language-bash">$ docker ps
+CONTAINER ID   IMAGE                            COMMAND                  PORTS                             NAMES
+fb56dc7a0347   ghcr.io/k3d-io/k3d-tools:5.8.3   "/app/k3d-tools noop"                                      k3d-k3s-default-tools
+c57587e96682   ghcr.io/k3d-io/k3d-proxy:5.8.3   "/bin/sh -c nginx-pr…"   80/tcp, 0.0.0.0:51982-&gt;6443/tcp   k3d-k3s-default-serverlb
+f7d87ef8a006   rancher/k3s:v1.31.5-k3s1         "/bin/k3d-entrypoint…"                                     k3d-k3s-default-agent-1
+87fdb4b3e0f6   rancher/k3s:v1.31.5-k3s1         "/bin/k3d-entrypoint…"                                     k3d-k3s-default-agent-0
+358429b7517a   rancher/k3s:v1.31.5-k3s1         "/bin/k3d-entrypoint…"                                     k3d-k3s-default-server-0
+</code></pre>
+
+    <p>Também vemos que a porta 6443 está aberta para o <code>k3d-k3s-default-serverlb</code>, um proxy útil de balanceador de carga (load balancer) que redirecionará conexões na porta 6443 para o nó de servidor, permitindo acessar o conteúdo do cluster. A porta na nossa máquina (no exemplo acima, 51982) é escolhida aleatoriamente. Poderíamos ter optado por não usar o balanceador de carga com <code>k3d cluster create -a 2 --no-lb</code> e a porta ficaria aberta diretamente para o nó de servidor. Ter um balanceador de carga oferece recursos adicionais, então vamos mantê-lo.</p>
+    <p>O k3d também configura um <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/">kubeconfig</a>, um arquivo usado para organizar informações sobre clusters, usuários, namespaces e mecanismos de autenticação. O conteúdo do arquivo pode ser visto com o comando <code>k3d kubeconfig get k3s-default</code>.</p>
+    <p>A outra ferramenta que usaremos neste curso é o <a href="https://kubernetes.io/docs/reference/kubectl/">kubectl</a>. O kubectl é a ferramenta de linha de comando do Kubernetes e nos permitirá interagir com o cluster. Ele lê o kubeconfig a partir do local especificado na variável de ambiente KUBECONFIG ou, por padrão, em <code>~/.kube/config</code>, usando as informações para se conectar ao cluster. Os conteúdos incluem certificados, senhas e o endereço da API do cluster. Você pode definir o contexto com <code>kubectl config use-context k3d-k3s-default</code>.</p>
+
+    <p>Agora o <code>kubectl</code> poderá acessar o cluster:</p>
+<pre><code class="language-bash">$ kubectl cluster-info
+Kubernetes control plane is running at https://0.0.0.0:51982
+CoreDNS is running at https://0.0.0.0:51982/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Metrics-server is running at https://0.0.0.0:51982/api/v1/namespaces/kube-system/services/https:metrics-server:https/proxy
+</code></pre>
+
+    <p>Podemos ver que o <code>kubectl</code> está conectado ao contêiner <code>k3d-k3s-default-serverlb</code> através da porta 51982 (neste caso).</p>
+    <p>Se quiser parar ou iniciar o cluster, basta executar:</p>
+<pre><code class="language-bash">$ k3d cluster stop
+  INFO[0000] Stopping cluster 'k3s-default'
+  INFO[0011] Stopped cluster 'k3s-default'
+
+$ k3d cluster start
+  INFO[0000] Using the k3d-tools node to gather environment information
+  INFO[0000] Starting existing tools node k3d-k3s-default-tools...
+  INFO[0000] Starting Node 'k3d-k3s-default-tools'
+  INFO[0001] Starting new tools node...
+  INFO[0001] Starting Node 'k3d-k3s-default-tools'
+  INFO[0003] Starting cluster 'k3s-default'
+  INFO[0003] Starting servers...
+  INFO[0003] Starting Node 'k3d-k3s-default-server-0'
+  INFO[0010] Starting agents...
+  INFO[0010] Starting Node 'k3d-k3s-default-agent-1'
+  INFO[0011] Starting Node 'k3d-k3s-default-agent-0'
+  INFO[0027] Starting helpers...
+  INFO[0027] Starting Node 'k3d-k3s-default-serverlb'
+  INFO[0027] Starting Node 'k3d-k3s-default-tools'
+  INFO[0035] Injecting records for hostAliases (incl. host.k3d.internal) and for 5 network members into CoreDNS configmap...
+  INFO[0038] Started cluster 'k3s-default'
+</code></pre>
+
+    <p>Por enquanto, precisaremos do cluster em execução. Mas caso queira removê-lo posteriormente, você pode rodar <code>k3d cluster delete</code>.</p>
+
+    <h3 id="primeiro-deploy">Primeiro Deploy</h3>
+    <h4 id="preparando-se-para-o-primeiro-deploy">Preparando-se para o primeiro deploy</h4>
+    <p>Antes de implantar qualquer coisa, precisaremos de uma pequena aplicação para fazer o deploy. Durante o curso, você desenvolverá sua própria aplicação. As tecnologias usadas para a aplicação não importam — para os exemplos usaremos <a href="https://nodejs.org/en/">Node.js</a>, mas a aplicação de exemplo também estará disponível via GitHub e Docker Hub.</p>
+    <p>Vamos lançar uma <a href="https://github.com/kubernetes-hy/material-example/tree/master/app1">aplicação</a> que gera e exibe um hash a cada 5 segundos. Você pode testá-la com <code>docker run jakousa/dwk-app1</code>.</p>
+    <p>Para fazer o deploy de uma imagem, precisamos que o cluster tenha acesso a ela. Por padrão, o Kubernetes foi projetado para ser usado com um registro (registry). Usaremos o registro habitual, Docker Hub. Se você nunca usou o Docker Hub, é o local padrão para onde o cliente Docker aponta. Por exemplo, quando você roda <code>docker pull nginx</code>, a imagem nginx vem do Docker Hub.</p>
+    <p>Também é possível usar imagens locais com o k3d, mas isso não funcionará em soluções que não sejam o k3d. Se quiser tentar usar imagens locais, use <code>k3d image import &lt;nome-da-imagem&gt;</code>. Depois, altere o <a href="https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy">imagePullPolicy</a> do deployment do padrão <code>Always</code> para <code>IfNotPresent</code> ou <code>Never</code> para permitir que a imagem local seja usada. O deployment pode ser editado após a criação com <code>kubectl edit deployment &lt;nome-do-deployment&gt;</code>.</p>
+    <blockquote>
+        <p><strong>Nota:</strong><br>
+        No Windows, o comando abre automaticamente o Bloco de Notas. Você precisa salvar com CTRL + S e fechar a aba do Bloco de Notas para aplicar completamente as alterações. Se você apenas pressionar CTRL + C no terminal, as alterações não serão aplicadas!</p>
+    </blockquote>
+
+    <h4 id="aplicacoes-de-exemplo">Aplicações de exemplo</h4>
+    <p>Em seções futuras, o material utilizará as aplicações fornecidas nos comandos. Você pode acompanhar alterando a imagem para a sua própria aplicação. Quase tudo pode ser encontrado no mesmo repositório: <a href="https://github.com/kubernetes-hy/material-example">kubernetes-hy/material-example</a>.</p>
+    <p>Agora estamos finalmente prontos para fazer o deploy da nossa primeira aplicação no Kubernetes!</p>
+
+    <h4 id="deployment">Deployment</h4>
+    <p>Para implantar uma aplicação, precisaremos criar um objeto do tipo Deployment com a imagem:</p>
+<pre><code class="language-bash">kubectl create deployment hashgenerator-dep --image=jakousa/dwk-app1 
+</code></pre>
+    <p>Esta ação criou algumas coisas para analisarmos:</p>
+    <ul>
+        <li>um recurso <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment</a> e</li>
+        <li>um recurso <a href="https://kubernetes.io/docs/concepts/workloads/pods/">Pod</a>.</li>
+    </ul>
+
+    <h4 id="o-que-e-um-pod">O que é um Pod?</h4>
+    <p>Um Pod é uma abstração em torno de um ou mais contêineres. Os Pods fornecem um contexto para 1..N contêineres para que possam compartilhar armazenamento e rede. É muito semelhante a como você usou contêineres para definir ambientes para um único processo. Eles podem ser pensados como um "contêiner de contêineres". A maioria das mesmas regras se aplica: um Pod é excluído se os contêineres internos pararem de rodar, e os arquivos contidos serão perdidos com ele.</p>
+
+    <img src="image-2.png" alt="O que é um pod">
+
+    <p>Ler a documentação ou pesquisar na internet não são as únicas maneiras de encontrar informações sobre os diferentes recursos do Kubernetes. Podemos obter explicações simples diretamente da linha de comando usando o comando <code>kubectl explain RESOURCE</code>.</p>
+    <p>Por exemplo, para obter uma descrição do que é um Pod e seus campos obrigatórios, podemos usar:</p>
+<pre><code class="language-bash">$ kubectl explain pod
+  KIND:     Pod
+  VERSION:  v1
+
+  DESCRIPTION:
+       Pod is a collection of containers that can run on a host. This resource is
+       created by clients and scheduled onto hosts.
+</code></pre>
+    <p>No Kubernetes, todas as entidades existentes são chamadas de <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/">objetos</a>. Você pode listar todos os objetos de um recurso com <code>kubectl get RESOURCE</code>.</p>
+<pre><code class="language-bash">$ kubectl get pods
+  NAME                               READY   STATUS    RESTARTS   AGE
+  hashgenerator-dep-6965c5c7-2pkxc   1/1     Running   0          2m1s
+</code></pre>
+
+    <h4 id="criando-um-pod">Criando um Pod</h4>
+    <p>Temos basicamente duas formas de criar um Pod, a primeira é através de um comando no terminal e a segunda é através de um arquivo YAML.</p>
+    <p>Vamos começar criando um Pod através de um comando no terminal.</p>
+<pre><code class="language-bash">kubectl run meu-app --image=nginx --port=80
+</code></pre>
+    <p>O comando acima irá criar um Pod chamado meu-app, com uma imagem do nginx e com a porta 80 exposta.</p>
+
+    <h4 id="visualizando-detalhes-sobre-os-pods">Visualizando detalhes sobre os Pods</h4>
+    <p>Para ver o Pod criado, podemos usar o comando:</p>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+    <p>O comando acima irá listar todos os Pods que estão em execução no cluster, na namespace default.</p>
+    <p>Sim, temos namespaces no Kubernetes, mas isso é assunto para outro dia. Por enquanto, vamos focar em Pods e apenas temos que saber que por padrão, o Kubernetes irá criar todos os objetos dentro da namespace default se não especificarmos outra.</p>
+    <p>Para ver os Pods em execução em todas as namespaces, podemos usar o comando:</p>
+<pre><code class="language-bash">kubectl get pods --all-namespaces
+</code></pre>
+    <p>Ou ainda, podemos usar o comando:</p>
+<pre><code class="language-bash">kubectl get pods -A
+</code></pre>
+    <p>Agora, se você quiser ver todos os Pods de uma namespace específica, você pode usar o comando:</p>
+<pre><code class="language-bash">kubectl get pods -n &lt;namespace&gt;
+</code></pre>
+    <p>Por exemplo:</p>
+<pre><code class="language-bash">kubectl get pods -n kube-system
+</code></pre>
+    <p>O comando acima irá listar todos os Pods que estão em execução na namespace kube-system, que é a namespace onde o Kubernetes irá criar todos os objetos relacionados ao cluster, como por exemplo, os Pods do CoreDNS, do Kube-Proxy, do Kube-Controller-Manager, do Kube-Scheduler, etc.</p>
+    <p>Caso você queira ver ainda mais detalhes sobre o Pod, você pode pedir para o Kubernetes mostrar os detalhes do Pod em formato YAML, usando o comando:</p>
+<pre><code class="language-bash">kubectl get pods &lt;nome-do-pod&gt; -o yaml
+</code></pre>
+    <p>Por exemplo:</p>
+<pre><code class="language-bash">kubectl get pods meu-app -o yaml
+</code></pre>
+    <p>O comando acima mostrará todos os detalhes do Pod em formato YAML, praticamente igual ao que você verá no arquivo YAML que utilizaremos a seguir para criar o Pod. Porém terá alguns detalhes a mais, como por exemplo, o UID do Pod, o nome do Node onde o Pod está sendo executado, etc. Afinal, esse Pod já está em execução, então o Kubernetes já tem mais detalhes sobre ele.</p>
+    <p>Uma outra saída interessante é a saída em formato JSON, que você pode ver usando o comando:</p>
+<pre><code class="language-bash">kubectl get pods &lt;nome-do-pod&gt; -o json
+</code></pre>
+    <p>Por exemplo:</p>
+<pre><code class="language-bash">kubectl get pods meu-app -o json
+</code></pre>
+    <p>Ou seja, utilizando o parametro <code>-o</code>, você pode escolher o formato de saída que você quer ver, por exemplo, yaml, json, wide, etc.</p>
+    <p>Ahh, a saída wide é interessante, pois ela mostra mais detalhes sobre o Pod, como por exemplo, o IP do Pod e o Node onde o Pod está sendo executado.</p>
+<pre><code class="language-bash">kubectl get pods &lt;nome-do-pod&gt; -o wide
+</code></pre>
+    <p>Por exemplo:</p>
+<pre><code class="language-bash">kubectl get pods meu-app -o wide
+</code></pre>
+    <p>Agora, se você quiser ver os detalhes do Pod, mas sem precisar usar o comando get, você pode usar o comando:</p>
+<pre><code class="language-bash">kubectl describe pods &lt;nome-do-pod&gt;
+</code></pre>
+    <p>Por exemplo:</p>
+<pre><code class="language-bash">kubectl describe pods meu-app
+</code></pre>
+    <p>Com o <code>describe</code> você pode ver todos os detalhes do Pod, inclusive os detalhes do container que está dentro do Pod.</p>
+
+    <h5>Removendo um Pod</h5>
+    <p>Agora vamos remover o Pod que criamos, usando o comando:</p>
+<pre><code class="language-bash">kubectl delete pods meu-app
+</code></pre>
+    <p>Fácil né? Agora, vamos criar um Pod através de um arquivo YAML.</p>
+
+    <h4 id="criando-um-pod-atraves-de-um-arquivo-yaml">Criando um Pod através de um arquivo YAML</h4>
+    <p>Vamos criar um arquivo YAML chamado <code>pod.yaml</code> com o seguinte conteúdo:</p>
+<pre><code class="language-yaml">apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo do objeto que estamos criando
+metadata: # metadados do Pod 
+  name: meu-app # nome do Pod que estamos criando
+  labels: # labels do Pod
+    run: meu-app # label run com o valor meu-app
+spec: # especificação do Pod
+  containers: # containers que estão dentro do Pod
+  - name: meu-app # nome do container
+    image: nginx # imagem do container
+    ports: # portas que estão sendo expostas pelo container
+    - containerPort: 80 # porta 80 exposta pelo container
+</code></pre>
+    <p>Agora, vamos criar o Pod usando o arquivo YAML que acabamos de criar.</p>
+<pre><code class="language-bash">kubectl apply -f pod.yaml
+</code></pre>
+    <p>O comando acima irá criar o Pod usando o arquivo YAML que criamos.</p>
+    <p>Para ver o Pod criado, podemos usar o comando:</p>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+    <p>Já que usamos o comando <code>apply</code>, acho que vale a pena explicar o que ele faz.</p>
+    <p>O comando <code>apply</code> é um comando que faz o que o nome diz, ele aplica o arquivo YAML no cluster, ou seja, ele cria o objeto que está descrito no arquivo YAML no cluster. Caso o objeto já exista, ele irá atualizá-lo com as informações que estão no arquivo YAML.</p>
+    <p>Um outro comando que você pode usar para criar um objeto no cluster é o comando <code>create</code>, que também cria o objeto que está descrito no arquivo YAML no cluster, porém, caso o objeto já exista, ele irá retornar um erro. E por esse motivo que o comando <code>apply</code> é mais usado, pois ele atualiza o objeto caso ele já exista. :)</p>
+    <p>Agora, vamos ver os detalhes do Pod que acabamos de criar.</p>
+<pre><code class="language-bash">kubectl describe pods meu-app
+</code></pre>
+
+    <h4 id="visualizando-os-logs-do-pod">Visualizando os logs do Pod</h4>
+    <p>Outro comando muito útil para ver o que está acontecendo com o Pod, mais especificamente ver o que o container está logando, é o comando:</p>
+<pre><code class="language-bash">kubectl logs meu-app
+</code></pre>
+    <p>Sendo que meu-app é o nome do Pod que criamos.</p>
+    <p>Se você quiser ver os logs do container em tempo real, você pode usar o comando:</p>
+<pre><code class="language-bash">kubectl logs -f meu-app
+</code></pre>
+    <p>Simples né? Agora, vamos remover o Pod que criamos, usando o comando:</p>
+<pre><code class="language-bash">kubectl delete pods meu-app
+</code></pre>
+
+    <h4 id="criando-um-pod-com-mais-de-um-container">Criando um Pod com mais de um container</h4>
+    <p>Vamos criar um arquivo YAML chamado <code>pod-multi-container.yaml</code> com o seguinte conteúdo:</p>
+<pre><code class="language-yaml">apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo do objeto que estamos criando
+metadata: # metadados do Pod 
+  name: meu-app # nome do Pod que estamos criando
+  labels: # labels do Pod
+    run: meu-app # label run com o valor meu-app
+spec: # especificação do Pod
+  containers: # containers que estão dentro do Pod
+  - name: meu-nginx # nome do container
+    image: nginx # imagem do container
+    ports: # portas que estão sendo expostas pelo container
+    - containerPort: 80 # porta 80 exposta pelo container
+  - name: meu-alpine # nome do container
+    image: alpine # imagem do container
+    args:
+    - sleep
+    - "1800"
+</code></pre>
+    <p>Com o manifesto acima, estamos criando um Pod com dois containers, um container chamado meu-nginx com a imagem nginx e outro container chamado meu-alpine com a imagem alpine. Um coisa importante de lembrar é que o container do Alpine está sendo criado com o comando <code>sleep 1800</code> para que o container não pare de rodar, diferente do container do Nginx que possui um processo principal que fica sendo executado em primeiro plano, fazendo com que o container não pare de rodar.</p>
+    <p>O Alpine é uma distribuição Linux que é muito leve, e não possui um processo principal que fica sendo executado em primeiro plano, por isso, precisamos executar o comando <code>sleep 1800</code> para que o container não pare de rodar, adicionando assim um processo principal que fica sendo executado em primeiro plano.</p>
+    <p>Agora, vamos criar o Pod usando o arquivo YAML que acabamos de criar.</p>
+<pre><code class="language-bash">kubectl apply -f pod-multi-container.yaml
+</code></pre>
+    <p>Para ver o Pod criado, podemos usar o comando:</p>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+    <p>Agora, vamos ver os detalhes do Pod que acabamos de criar.</p>
+<pre><code class="language-bash">kubectl describe pods meu-app
+</code></pre>
+
+    <h4 id="os-comandos-attach-e-exec">Os comandos <code>attach</code> e <code>exec</code></h4>
+    <p>Vamos conhecer dois novos comandos, o <code>attach</code> e o <code>exec</code>.</p>
+    <p>O comando <code>attach</code> é usado para se conectar a um container que está rodando dentro de um Pod. A sua sintaxe básica para se conectar a um container específico é:</p>
+<pre><code class="language-bash">kubectl attach meu-app -c meu-alpine
+</code></pre>
+    <p>Usando o <code>attach</code> é como se estivéssemos conectando diretamente em uma console de uma máquina virtual, não estamos criando nenhum processo novo dentro do container, apenas nos conectando ao processo principal já em execução.</p>
+    <p>Por esse motivo, se utilizarmos o <code>attach</code> para conectar em um container que está rodando um servidor (como o Nginx), ficaremos presos ao processo que está em execução em primeiro plano, e não conseguiremos executar nenhum outro comando.</p>
+<pre><code class="language-bash">kubectl attach meu-app -c meu-nginx
+</code></pre>
+    <p>Para encerrar a conexão com o container, basta apertar a tecla <code>Ctrl + C</code>. O uso indicado do <code>attach</code> é estritamente para visualização e conexão ao processo principal de um container, e não para executar comandos dentro dele.</p>
+    <p>Para a execução de comandos específicos dentro de um container, utiliza-se o comando <code>exec</code>.</p>
+    <p>O comando <code>exec</code> roda processos dentro de um container que já está em execução em um Pod. A estrutura do comando para rodar uma instrução simples, como listar arquivos, é a seguinte:</p>
+<pre><code class="language-bash">kubectl exec meu-app -c meu-alpine -- ls
+</code></pre>
+    <p>Também é possível utilizar o <code>exec</code> para obter acesso interativo ao container. Para isso, utiliza-se o parâmetro <code>-it</code>.</p>
+<pre><code class="language-bash">kubectl exec meu-app -c meu-alpine -it -- sh
+</code></pre>
+    <p>O parâmetro <code>-it</code> é usado para que o comando <code>exec</code> crie um processo dentro do container com interatividade e com um terminal alocado. Assim, o comando <code>exec</code> possibilita uma experiência similar à de um shell, criando um novo processo paralelo (neste caso, o processo <code>sh</code>). É por esse motivo que o comando <code>exec</code> é mais utilizado: ele cria um novo processo interpretador dentro do container, diferentemente do comando <code>attach</code>, que não cria processo algum.</p>
+    <p>Dessa forma, é possível conectar-se a um container que roda uma aplicação em primeiro plano (como o Nginx), abrindo um interpretador de comandos paralelo e permitindo a execução de qualquer comando interno com um shell dedicado.</p>
+<pre><code class="language-bash">kubectl exec meu-app -c meu-nginx -it -- sh
+</code></pre>
+    <p>Para encerrar o terminal aberto pelo <code>exec</code>, basta apertar a tecla <code>Ctrl + D</code>.</p>
+
+    <h4 id="criando-um-container-com-limites-de-memoria-e-cpu">Criando um container com limites de memória e CPU</h4>
+    <p>Vamos criar um arquivo YAML chamado <code>pod-limitado.yaml</code> com o seguinte conteúdo:</p>
+<pre><code class="language-yaml">apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo do objeto que estamos criando
+metadata: # metadados do Pod
+  name: meu-app # nome do Pod que estamos criando
+  labels: # labels do Pod
+    run: meu-app # label run com o valor meu-app
+spec: # especificação do Pod 
+  containers: # containers que estão dentro do Pod 
+  - name: meu-nginx # nome do container 
+    image: nginx # imagem do container
+    ports: # portas que estão sendo expostas pelo container
+    - containerPort: 80 # porta 80 exposta pelo container
+    resources: # recursos que estão sendo utilizados pelo container
+      limits: # limites máximo de recursos que o container pode utilizar
+        memory: "128Mi" # limite de memória que está sendo utilizado pelo container, no caso 128 megabytes no máximo 
+        cpu: "0.5" # limite máxima de CPU que o container pode utilizar, no caso 50% de uma CPU no máximo
+      requests: # recursos garantidos ao container
+        memory: "64Mi" # memória garantida ao container, no caso 64 megabytes
+        cpu: "0.3" # CPU garantida ao container, no caso 30% de uma CPU
+</code></pre>
+    <p>Veja que estamos conhecendo alguns novos campos, o <code>resources</code>, o <code>limits</code> e o <code>requests</code>.</p>
+    <p>O campo <code>resources</code> é usado para definir os recursos que serão utilizados pelo container, e dentro dele temos os campos <code>limits</code> e <code>requests</code>.</p>
+    <p>O campo <code>limits</code> é usado para definir os limites máximos de recursos que o container pode utilizar, e o campo <code>requests</code> é usado para definir os recursos garantidos ao container.</p>
+    <p>Simples demais!</p>
+    <p>Os valores que passamos para os campos <code>limits</code> e <code>requests</code> foram:</p>
+    <ul>
+        <li><code>memory</code>: quantidade de memória que o container pode utilizar, por exemplo, <code>128Mi</code> ou <code>1Gi</code>. O valor <code>Mi</code> significa mebibytes e o valor <code>Gi</code> significa gibibytes. O valor <code>M</code> significa megabytes e o valor <code>G</code> significa gigabytes. O valor <code>Mi</code> é usado para definir o limite de memória em mebibytes, pois o Kubernetes utiliza o sistema de unidades binárias, e não o sistema de unidades decimais. O valor <code>M</code> é usado para definir o limite de memória em megabytes, pois o Docker utiliza o sistema de unidades decimais, e não o sistema de unidades binárias. Então, se você estiver utilizando o Docker, você pode usar o valor <code>M</code> para definir o limite de memória, mas se você estiver utilizando o Kubernetes, você deve usar o valor <code>Mi</code> para definir o limite de memória.</li>
+        <li><code>cpu</code>: quantidade de CPU que o container pode utilizar, por exemplo, <code>0.5</code> ou <code>1</code>. O valor <code>0.5</code> significa 50% de uma CPU, e o valor <code>1</code> significa 100% de uma CPU. O valor <code>m</code> significa millicpu, ou seja, milicpu é igual a 1/1000 de uma CPU. Então, se você quiser definir o limite de CPU em 50% de uma CPU, você pode definir o valor <code>500m</code>, ou você pode definir o valor <code>0.5</code>, que é o mesmo que definir o valor <code>500m</code>.</li>
+    </ul>
+    <p>Agora vamos criar o Pod com os limites de memória e CPU.</p>
+<pre><code class="language-bash">kubectl create -f pod-limitado.yaml
+</code></pre>
+    <p>Agora vamos verificar se o Pod foi criado.</p>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+    <p>Vamos verificar os detalhes do Pod.</p>
+<pre><code class="language-bash">kubectl describe pod meu-app
+</code></pre>
+    <p>Veja que o Pod foi criado com sucesso, e que os limites de memória e CPU foram definidos conforme o arquivo YAML.</p>
+    <p>Veja abaixo a parte da saída do comando <code>describe</code> que mostra os limites de memória e CPU.</p>
+<pre><code class="language-bash">Containers:
+  meu-nginx:
+    Container ID:   docker://e7b0c7b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0
+    Image:          nginx
+    Image ID:       docker-pullable://nginx@sha256:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 01 Jan 2023 00:00:00 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:        300m
+      memory:     64Mi
+    Environment:  &lt;none&gt;
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-0b0b0 (ro)
+</code></pre>
+    <p>Veja que na saída acima, ele mostra o campo CPU com o valor <code>500m</code>, isso significa que o container pode utilizar no máximo 50% de uma CPU, afinal um CPU é igual a 1000 milliCPUs, e 50% de 1000 milicpus é 500 milliCPUs.</p>
+    <p>Para você testar os limites de memória e CPU, você pode executar o comando <code>stress</code> dentro do container, que é um comando que faz o container consumir recursos de CPU e memória. Lembre-se de instalar o comando <code>stress</code>, pois ele não vem instalado por padrão.</p>
+    <p>Para ficar fácil de testar, vamos criar um Pod com o Ubuntu com limitação de memória, e vamos instalar o comando <code>stress</code> dentro do container.</p>
+    <p>Crie o arquivo <code>pod-ubuntu-limitado.yaml</code>.</p>
+<pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu
+spec:
+  containers:
+  - name: ubuntu
+    image: ubuntu
+    args:
+    - sleep
+    - infinity
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "0.5"
+      requests:
+        memory: "64Mi"
+        cpu: "0.3"
+</code></pre>
+    <p>Olha essa sacadinha do parâmetro <code>infinity</code>, ele faz o container esperar para sempre e assim, se manter em execução.</p>
+    <p>Agora vamos criar o Pod.</p>
+<pre><code class="language-bash">kubectl create -f pod-ubuntu-limitado.yaml
+</code></pre>
+    <p>Agora vamos verificar se o Pod foi criado.</p>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+    <p>Agora vamos para dentro do container.</p>
+<pre><code class="language-bash">kubectl exec -it ubuntu -- bash
+</code></pre>
+    <p>Agora vamos instalar o comando <code>stress</code>.</p>
+<pre><code class="language-bash">apt update
+apt install -y stress
+</code></pre>
+    <p>Agora vamos executar o comando <code>stress</code> para consumir memória.</p>
+<pre><code class="language-bash">stress --vm 1 --vm-bytes 100M
+</code></pre>
+    <p>Até aqui tudo bem, pois definimos o limite de memória em 128Mi, e o comando <code>stress</code> está consumindo 100M, então está tudo certo.</p>
+    <p>Vamos aumentar o consumo de memória para 200M.</p>
+<pre><code class="language-bash">stress --vm 1 --vm-bytes 200M
+</code></pre>
+    <p>Veja que o comando <code>stress</code> não consegue consumir 200M, pois o limite de memória é 128Mi, e 128Mi é menor que 200M e com isso tomamos o erro e o comando <code>stress</code> é interrompido.</p>
+    <p>Atigimos o nosso objetivo, atingimos o limite do nosso container! :D</p>
+    <p>Quer brincar um pouco mais com o comando <code>stress</code>? Veja o <code>--help</code> dele.</p>
+<pre><code class="language-bash">stress --help
+</code></pre>
+    <p>Ele traz várias opções para você brincar com o consumo de memória e CPU.</p>
+
+    <h4 id="adicionando-um-volume-emptydir-no-pod">Adicionando um volume EmptyDir no Pod</h4>
+    <p>Primeira coisa, nesse momento não é o momento de entrar em maiores detalhes sobre volumes, nós teremos um dia inteiro para falar sobre volumes, então não se preocupe com isso agora.</p>
+    <p>O dia de hoje é para que possamos ficar bastante confortável com os Pods, desde sua criação, administração, execução de comandos, etc.</p>
+    <p>Então, vamos criar um Pod com um volume EmptyDir.</p>
+    <p>Antes, o que é um volume EmptyDir?</p>
+    <p>Um volume do tipo EmptyDir é um volume que é criado no momento em que o Pod é criado, e ele é destruído quando o Pod é destruído, ou seja, ele é um volume temporário.</p>
+    <p>No dia-a-dia, você não vai usar muito esse tipo de volume, mas é importante que você saiba que ele existe. Um dos casos de uso mais comuns é quando você precisa compartilhar dados entre os containers de um Pod. Imagina que você tem dois containers em um Pod e um deles possui um diretório com dados, e você quer que o outro container tenha acesso a esses dados. Nesse caso, você pode criar um volume do tipo EmptyDir e compartilhar esse volume entre os dois containers.</p>
+    <p>Chame o arquivo de <code>pod-emptydir.yaml</code>.</p>
+<pre><code class="language-yaml">apiVersion: v1 # versão da API do Kubernetes
+kind: Pod # tipo de objeto que estamos criando
+metadata: # metadados do Pod
+  name: meu-app # nome do Pod
+spec: # especificação do Pod
+  containers: # lista de containers
+  - name: meu-container # nome do container 
+    image: ubuntu # imagem do container
+    args: # argumentos que serão passados para o container
+    - sleep # usando o comando sleep para manter o container em execução
+    - infinity # o argumento infinity faz o container esperar para sempre
+    volumeMounts: # lista de volumes que serão montados no container
+    - name: primeiro-emptydir # nome do volume
+      mountPath: /meu-diretorio # diretório onde o volume será montado 
+  volumes: # lista de volumes
+  - name: primeiro-emptydir # nome do volume
+    emptyDir: # tipo do volume
+      sizeLimit: 256Mi # tamanho máximo do volume
+</code></pre>
+    <p>Agora vamos criar o Pod.</p>
+<pre><code class="language-bash">kubectl create -f pod-emptydir.yaml
+</code></pre>
+    <p>Agora vamos verificar se o Pod foi criado.</p>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+    <p>Você pode ver a saída do comando <code>kubectl describe pod meu-app</code> para ver o volume que foi criado.</p>
+<pre><code class="language-bash">kubectl describe pod meu-app
+</code></pre>
+<pre><code class="language-bash">Volumes:
+  primeiro-emptydir:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  256Mi
+</code></pre>
+    <p>Agora vamos para dentro do container.</p>
+<pre><code class="language-bash">kubectl exec -it meu-app -- bash
+</code></pre>
+    <p>Agora vamos criar um arquivo dentro do diretório <code>/meu-diretorio</code>.</p>
+<pre><code class="language-bash">touch /meu-diretorio/FUNCIONAAAAAA
+</code></pre>
+    <p>Pronto, o nosso arquivo foi criado dentro do diretório <code>/meu-diretorio</code>, que é um diretório dentro do volume do tipo EmptyDir.</p>
+    <p>Se você digitar <code>mount</code>, vai ver que o diretório <code>/meu-diretorio</code> está montado certinho dentro de nosso container.</p>
+    <p>Pronto, agora você já sabe criar um Pod com um volume do tipo EmptyDir. :)</p>
+    <p>Lembrando mais uma vez que ainda vamos ver muito, mas muito mais sobre volumes, então não se preocupe com isso agora.</p>
+
+    <h4 id="o-que-e-um-recurso-deployment">O que é um recurso Deployment?</h4>
+    <p>Um recurso <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment</a> cuida da implantação. É uma forma de dizer ao Kubernetes qual contêiner você quer, como ele deve ser executado e quantas instâncias dele devem estar rodando.</p>
+    <p>Quando criamos o Deployment, um objeto <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/">ReplicaSet</a> também foi criado. Os ReplicaSets são usados para definir quantas réplicas de um Pod você deseja. Ele criará ou excluirá Pods até que o número desejado esteja em execução. Os ReplicaSets são geridos pelos Deployments e você não precisa defini-los ou modificá-los manualmente. Se quiser alterar o número de réplicas, edite o Deployment e ele cuidará de modificar o ReplicaSet.</p>
+    <p>Você pode visualizar os deployments da seguinte forma:</p>
+<pre><code class="language-bash">$ kubectl get deployments
+  NAME                READY   UP-TO-DATE   AVAILABLE   AGE
+  hashgenerator-dep   1/1     1            1           54s
+</code></pre>
+    <p>1/1 réplicas estão prontas! Testaremos múltiplas réplicas mais tarde.</p>
+    <p>Para ver a saída do programa, podemos executar:</p>
+<pre><code class="language-bash">kubectl logs -f hashgenerator-dep-6965c5c7-2pkxc
+</code></pre>
+
+    <h4 id="o-projeto-do-curso">O projeto do curso</h4>
+    <p>Na maioria dos exercícios deste curso, desenvolveremos a aplicação do projeto do curso. O projeto é uma aplicação simples de lista de tarefas (todo) com os recursos familiares de criar, ler, atualizar e excluir (CRUD). Uma tarefa é um texto como "Preciso limpar a casa", que pode estar no estado de pendente ou concluída. No entanto, a aplicação do projeto não é apenas um app comum de todos; ela possui alguns recursos adicionais, muitos dos quais serão adicionados ao longo do curso como microsserviços separados.</p>
+
+    <img src="image-3.png" alt="Arquitetura do Projeto">
+
+    <p>Os exercícios se concentram principalmente em configurações do Kubernetes, mas também há alguma codificação necessária para construir o projeto. Você pode usar qualquer linguagem de programação e framework de sua escolha para o projeto.</p>
+
+    <h4 id="configuracao-declarativa-com-yaml">Configuração declarativa com YAML</h4>
+    <p>Criamos o deployment com:</p>
+<pre><code class="language-bash">$ kubectl create deployment hashgenerator-dep --image=jakousa/dwk-app1
+</code></pre>
+    <p>Se precisarmos escalá-lo 4 vezes e atualizar a imagem, os seguintes comandos podem ser dados:</p>
+<pre><code class="language-bash">$ kubectl scale deployment/hashgenerator-dep --replicas=4
+
+$ kubectl set image deployment/hashgenerator-dep dwk-app1=jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64
+</code></pre>
+    <p>As coisas começam a ficar realmente trabalhosas. É difícil imaginar como alguém em seu juízo perfeito manteria várias aplicações dessa forma. Sorte que agora usaremos uma abordagem declarativa, na qual definimos como as coisas devem ser, em vez de como elas devem mudar. Isso é muito mais sustentável a longo prazo do que a abordagem imperativa e manterá nossa sanidade.</p>
+    <p>Antes de refazer os passos anteriores pela abordagem declarativa, vamos remover o deployment existente:</p>
+<pre><code class="language-bash">$ kubectl delete deployment hashgenerator-dep
+  deployment.apps "hashgenerator-dep" deleted
+</code></pre>
+    <p>E criar uma nova pasta chamada <code>manifests</code> contendo um arquivo chamado <code>deployment.yaml</code> com o seguinte conteúdo (Você pode conferir o exemplo <a href="https://github.com/kubernetes-hy/material-example/tree/master/app1">aqui</a>):</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hashgenerator-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hashgenerator
+  template:
+    metadata:
+      labels:
+        app: hashgenerator
+    spec:
+      containers:
+        - name: hashgenerator
+          image: jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64
+</code></pre>
+    <p>O arquivo criado é muito parecido com os arquivos <code>docker-compose.yaml</code> que escrevemos anteriormente. Vamos ignorar por enquanto o que não sabemos (principalmente os labels) e focar nas coisas que já conhecemos:</p>
+    <ul>
+        <li><strong>kind: Deployment</strong> declara qual tipo de objeto está sendo criado.</li>
+        <li><strong>name: hashgenerator-dep</strong> dá um nome como metadado.</li>
+        <li><strong>replicas: 1</strong> declara que deve haver um pod executando os contêineres.</li>
+        <li>Também estamos declarando que ele possui um contêiner baseado em uma determinada imagem e com um nome.</li>
+    </ul>
+    <p>Aplique o deployment com o comando apply:</p>
+<pre><code class="language-bash">$ kubectl apply -f manifests/deployment.yaml
+  deployment.apps/hashgenerator-dep created
+</code></pre>
+    <p>É isso! Mas, para fins de revisão, vamos excluí-lo e criá-lo novamente:</p>
+<pre><code class="language-bash">$ kubectl delete -f manifests/deployment.yaml
+  deployment.apps "hashgenerator-dep" deleted
+
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app1/manifests/deployment.yaml
+  deployment.apps/hashgenerator-dep created
+</code></pre>
+    <p>O fato de você poder aplicar um manifesto da internet diretamente assim é extremamente útil.</p>
+    <p>Em vez de excluir o deployment, poderíamos simplesmente aplicar um deployment modificado por cima do que já temos. O Kubernetes se encarregará de implementar uma nova versão (rolling update). Ao usar tags (por exemplo, <code>dwk/image:tag</code>) nos deployments, cada vez que atualizamos a imagem, podemos modificar e aplicar o novo YAML de deployment. Anteriormente, você pode ter usado sempre a tag <code>latest</code> ou nem ter pensado em tags. A partir da tag, o Kubernetes saberá que a imagem é nova e fará o download dela (pull).</p>
+    <blockquote>
+        <p><strong>Nota:</strong><br>
+        Ao atualizar qualquer coisa no Kubernetes, o uso do <code>delete</code> é, na verdade, um anti-pattern (antipadrão), devendo ser usado apenas como última opção. Desde que você não exclua o recurso, o Kubernetes fará uma atualização contínua (rolling update), garantindo o mínimo (ou nenhum) tempo de inatividade para a aplicação. Sobre o tema de anti-patterns: você também deve sempre evitar fazer qualquer coisa de forma imperativa! Se seus arquivos não disserem ao Kubernetes e à sua equipe qual deve ser o estado atual, e em vez disso você executar comandos imperativos que editam o estado, você estará apenas reduzindo o bus factor do seu cluster e da sua aplicação.</p>
+    </blockquote>
+
+    <h4 id="editor-de-texto-de-preferencia">Editor de texto de preferência</h4>
+    <p>Pessoalmente, uso o Visual Studio Code para criar arquivos YAML. Ele possui preenchimento automático útil, definições e verificações de sintaxe para Kubernetes através da extensão Kubernetes da Microsoft. Mesmo agora, ele nos avisa que não definimos limites de recursos. Não vou me preocupar com esse aviso ainda, mas você pode investigar se quiser.</p>
+    <p>O GitHub Copilot também pode ser bastante útil na criação de YAMLs.</p>
+    <p>Observe que aplicar um novo deployment não atualizará a aplicação a menos que a tag da imagem seja atualizada. Você não precisará excluir o deployment se sempre criar uma nova tag.</p>
+    <p>Seu fluxo de trabalho básico pode ser semelhante a este:</p>
+<pre><code class="language-bash">$ docker build -t &lt;imagem&gt;:&lt;nova_tag&gt;
+$ docker push &lt;imagem&gt;:&lt;nova_tag&gt;
+</code></pre>
+    <p>Em seguida, edite o <code>deployment.yaml</code> para que a tag seja atualizada para a <code>&lt;nova_tag&gt;</code> e execute o seguinte comando:</p>
+<pre><code class="language-bash">$ kubectl apply -f manifests/deployment.yaml
+</code></pre>
+    <p>Esse processo pode parecer um pouco tedioso ou até propenso a erros para você, e você está coberto de razão! Aprenderemos uma maneira mais elegante de fazer atualizações de aplicações no Capítulo 4.</p>
+
+</body>
+</html>
