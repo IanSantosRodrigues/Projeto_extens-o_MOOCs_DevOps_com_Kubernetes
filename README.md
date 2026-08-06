@@ -18,7 +18,7 @@ O conteúdo foi dividido em três partes para distribuir o estudo de forma equil
 - Ian Santos Rodrigues
 - Carlos Eduardo Goncalves Silva
 
-Autoria e licenças
+## Autoria e licenças
 
 Este projeto é uma adaptação educacional, em português brasileiro, produzida para fins acadêmicos a partir de materiais públicos de cursos sobre Kubernetes. A autoria dos cursos originais pertence aos seus respectivos criadores.
 
