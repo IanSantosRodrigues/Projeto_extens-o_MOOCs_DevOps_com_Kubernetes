@@ -1,0 +1,653 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{\textbf{#1}}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{}
+
+\begin{document}
+
+\section{Introdução ao Networking}\label{introduuxe7uxe3o-ao-networking}
+
+\subsubsection{Conteúdo}\label{conteuxfado}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[introduuxe7uxe3o-ao-networking]{Introdução ao Networking}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \hyperref[aplicauxe7uxe3o-de-rede-simples]{Aplicação de rede
+    simples}
+  \item
+    \hyperref[conectando-de-fora-do-cluster]{Conectando de fora do
+    cluster}
+  \item
+    \hyperref[configurauxe7uxe3o-inicial]{Configuração inicial}
+
+    \begin{itemize}
+    \tightlist
+    \item
+      \hyperref[limitauxe7uxf5es-do-ambiente-local]{Limitações do
+      ambiente local}
+    \end{itemize}
+  \item
+    \hyperref[o-que-uxe9-um-serviuxe7o]{O que é um serviço?}
+  \item
+    \hyperref[sobre-o-roteamento-do-kubernetes]{Sobre o roteamento do
+    Kubernetes}
+  \item
+    \hyperref[o-que-uxe9-um-ingress]{O que é um Ingress?}
+  \item
+    \hyperref[api-de-gateway]{API de gateway}
+  \end{itemize}
+\end{itemize}
+
+Agora de volta ao desenvolvimento! Reiniciar e acompanhar os logs foi um
+deleite. Em seguida, abriremos um endpoint para o aplicativo e o
+acessaremos via HTTP.
+
+\subsubsection{Aplicação de rede
+simples}\label{aplicauxe7uxe3o-de-rede-simples}
+
+Vamos desenvolver nosso aplicativo para que ele tenha um servidor HTTP
+respondendo com dois hashes: um hash que é armazenado até que o processo
+seja encerrado e um hash que é específico da solicitação. O corpo da
+resposta pode ser algo como ``Aplicativo abc123. Solicitação 94k9m2''.
+Escolha qualquer porta para ouvir.
+
+Um
+\href{https://github.com/kubernetes-hy/material-example/tree/master/app2}{exemplo}
+já foi preparado. Por padrão, ele escutará na porta 3000.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ kubectl apply }\AttributeTok{{-}f}\NormalTok{ https://raw.githubusercontent.com/kubernetes{-}hy/material{-}example/master/app2/manifests/deployment.yaml}
+\ExtensionTok{deployment.apps/hashresponse{-}dep}\NormalTok{ created}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Conectando de fora do
+cluster}\label{conectando-de-fora-do-cluster}
+
+Podemos confirmar que o hashresponse-dep está funcionando com o comando
+\texttt{port-forward}. Vamos ver primeiro o nome do pod e depois fazer o
+port-forward:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ kubectl get po}
+\ExtensionTok{NAME}\NormalTok{                                READY   STATUS    RESTARTS   AGE}
+\ExtensionTok{hashgenerator{-}dep{-}5cbbf97d5{-}z2ct9}\NormalTok{   1/1     Running   0          20h}
+\ExtensionTok{hashresponse{-}dep{-}57bcc888d7{-}dj5vk}\NormalTok{   1/1     Running   0          19h}
+
+\ExtensionTok{$}\NormalTok{ kubectl port{-}forward hashresponse{-}dep{-}57bcc888d7{-}dj5vk 3003:3000}
+\ExtensionTok{Forwarding}\NormalTok{ from 127.0.0.1:3003 }\AttributeTok{{-}}\OperatorTok{\textgreater{}}\NormalTok{ 3000}
+\ExtensionTok{Forwarding}\NormalTok{ from }\PreprocessorTok{[}\SpecialStringTok{::1}\PreprocessorTok{]}\NormalTok{:3003 }\AttributeTok{{-}}\OperatorTok{\textgreater{}}\NormalTok{ 3000}
+\end{Highlighting}
+\end{Shaded}
+
+Agora podemos ver a resposta de http://localhost:3003 e confirmar que
+está funcionando conforme o esperado.
+
+Como vemos, \texttt{port-forward} é um comando usado no Kubernetes para
+encaminhar uma porta local para um pod. Isso permite que você acesse
+facilmente os aplicativos em execução dentro do seu cluster Kubernetes a
+partir da sua máquina local. O encaminhamento de porta não é destinado
+ao uso em produção, mas é muito útil para fins de depuração e
+desenvolvimento.
+
+\begin{quote}
+\textbf{Exercício 1.5 --- O projeto, etapa 3}
+
+\textbf{Instruções:} Faça o projeto responder algo a uma solicitação GET
+enviada para a URL do projeto. Uma página HTML simples é boa, ou você
+pode implantar algo mais complexo, como um aplicativo de página única.
+
+Veja aqui (abre em uma nova aba) como você pode definir variáveis de
+ambiente para contêineres.
+
+Use \texttt{kubectl\ port-forward} para confirmar se o projeto está
+acessível e funciona no cluster usando um navegador para acessar o
+projeto.
+\end{quote}
+
+Conectar-se a um aplicativo dentro de um contêiner Docker é fácil. Se
+você tiver um aplicativo escutando a porta 3000, você pode simplesmente
+usar o \texttt{docker\ run} com a flag \texttt{-p\ 3003:3000}. Outra
+opção é usar a declaração de portas do Docker Compose. Infelizmente, o
+Kubernetes não é tão simples. Usaremos um recurso de serviço, um recurso
+de entrada (Ingress) ou a solução mais recente, a API Gateway.
+
+\subsubsection{Configuração inicial}\label{configurauxe7uxe3o-inicial}
+
+Como estamos executando nosso cluster dentro do Docker com o k3d,
+teremos que fazer alguns preparativos.
+
+Abrir uma rota de fora do cluster para o pod não será suficiente se não
+tivermos meios de acessar o cluster k3d dentro dos contêineres do
+Docker! Vamos ver como é a configuração padrão:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ docker ps}
+\ExtensionTok{CONTAINER}\NormalTok{ ID    IMAGE                      COMMAND                  CREATED             STATUS              PORTS                             NAMES}
+\ExtensionTok{b60f6c246ebb}\NormalTok{    ghcr.io/k3d{-}io/k3d{-}proxy:5 }\StringTok{"/bin/sh {-}c nginx{-}pr…"}\NormalTok{   2 hours ago         Up 2 hours          80/tcp, 0.0.0.0:58264{-}}\OperatorTok{\textgreater{}}\NormalTok{6443/tcp   k3d{-}k3s{-}default{-}serverlb}
+\ExtensionTok{553041f96fc6}\NormalTok{    rancher/k3s:latest         }\StringTok{"/bin/k3s agent"}\NormalTok{         2 hours ago         Up 2 hours                                            k3d{-}k3s{-}default{-}agent{-}1}
+\ExtensionTok{aebd23c2ef99}\NormalTok{    rancher/k3s:latest         }\StringTok{"/bin/k3s agent"}\NormalTok{         2 hours ago         Up 2 hours                                            k3d{-}k3s{-}default{-}agent{-}0}
+\ExtensionTok{a34e49184d37}\NormalTok{    rancher/k3s:latest         }\StringTok{"/bin/k3s server {-}{-}t…"}\NormalTok{   2 hours ago         Up 2 hours                                            k3d{-}k3s{-}default{-}server{-}0}
+\end{Highlighting}
+\end{Shaded}
+
+Vemos que o k3d preparou utilmente a porta 58264 para acessar a API do
+Kubernetes por meio do balanceador de carga, que faz proxy das
+solicitações para a porta 6443 no nó do servidor. Além disso, a porta 80
+está aberta no balanceador de carga. Todas as solicitações ao
+balanceador de carga serão enviadas por proxy para o nó servidor do
+cluster.
+
+Como vemos, nosso cluster possui atualmente um nó servidor e dois nós
+agentes. Para fins de teste, também desejaremos uma porta individual
+aberta para um único nó de agente. Vamos excluir nosso cluster antigo e
+criar um novo com portas específicas abertas para facilitar o acesso e
+os testes.
+
+A documentação do K3D (abre em uma nova aba) nos diz como as portas são
+abertas: abriremos o local 8081 para 80 em
+\texttt{k3d-k3s-default-serverlb} e o local 8082 para 30080 em
+\texttt{k3d-k3s-default-agent-0}. O 30080 é escolhido quase
+completamente aleatoriamente, mas precisa ter um valor entre 30000-32767
+para a próxima etapa:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ k3d cluster delete}
+\VariableTok{INFO}\OperatorTok{[}\DecValTok{0000}\OperatorTok{]} \ExtensionTok{Deleting}\NormalTok{ cluster }\StringTok{\textquotesingle{}k3s{-}default\textquotesingle{}}
+\ExtensionTok{...}
+\VariableTok{INFO}\OperatorTok{[}\DecValTok{0002}\OperatorTok{]} \ExtensionTok{Successfully}\NormalTok{ deleted cluster k3s{-}default!}
+
+\ExtensionTok{$}\NormalTok{ k3d cluster create }\AttributeTok{{-}{-}port}\NormalTok{ 8082:30080@agent:0 }\AttributeTok{{-}p}\NormalTok{ 8081:80@loadbalancer }\AttributeTok{{-}{-}agents}\NormalTok{ 2}
+\VariableTok{INFO}\OperatorTok{[}\DecValTok{0000}\OperatorTok{]} \ExtensionTok{Created}\NormalTok{ network }\StringTok{\textquotesingle{}k3d{-}k3s{-}default\textquotesingle{}}
+\ExtensionTok{...}
+\VariableTok{INFO}\OperatorTok{[}\DecValTok{0021}\OperatorTok{]} \ExtensionTok{Cluster} \StringTok{\textquotesingle{}k3s{-}default\textquotesingle{}}\NormalTok{ created successfully!}
+\VariableTok{INFO}\OperatorTok{[}\DecValTok{0021}\OperatorTok{]} \ExtensionTok{You}\NormalTok{ can now use it like this:}
+\ExtensionTok{kubectl}\NormalTok{ cluster{-}info}
+
+\ExtensionTok{$}\NormalTok{ kubectl apply }\AttributeTok{{-}f}\NormalTok{ https://raw.githubusercontent.com/kubernetes{-}hy/material{-}example/master/app2/manifests/deployment.yaml}
+\ExtensionTok{deployment.apps/hashresponse{-}dep}\NormalTok{ created}
+\end{Highlighting}
+\end{Shaded}
+
+Acima, o \texttt{agent:0} e o \texttt{loadbalancer} são baseados na
+documentação do k3d e na leitura do código-fonte
+\href{https://github.com/k3d-io/k3d/blob/11cc7979228f304025d61254eb0c0cb2745b9444/cmd/util/filter.go\#L119}{daqui}
+e
+\href{https://github.com/k3d-io/k3d/blob/main/pkg/types/types.go\#L65}{aqui}.
+
+Agora temos acesso através da porta 8081 ao nosso nó servidor (na
+verdade, todos os nós) e 8082 a um dos nossos nós agentes, porta 30080.
+Eles serão usados para mostrar diferentes métodos de comunicação com os
+servidores.
+
+\paragraph{Limitações do ambiente
+local}\label{limitauxe7uxf5es-do-ambiente-local}
+
+A configuração não é perfeita, teremos uma quantidade limitada de portas
+disponíveis no futuro. Isso será suficiente para nossos casos de uso.
+
+Seu sistema operacional pode suportar o uso da rede host, portanto,
+nenhuma porta precisa ser aberta. No entanto, não há experiência
+relatada com essa abordagem neste material.
+
+\subsubsection{O que é um serviço?}\label{o-que-uxe9-um-serviuxe7o}
+
+Os recursos de implantação (Deployment) gerenciam o processo de
+implantação para nós, cuidando da criação dos pods. Dado que os pods do
+aplicativo são efêmeros e podem ser criados ou encerrados a qualquer
+momento, a comunicação com o aplicativo não deve depender da presença de
+nenhum pod específico.
+
+Os recursos de serviço (Service) são essenciais para gerenciar a
+acessibilidade do aplicativo, garantindo que ele possa ser alcançado por
+conexões originadas tanto de fora do cluster quanto de dentro. Esses
+recursos lidam com o roteamento e o balanceamento de carga necessários
+para manter uma comunicação perfeita com o aplicativo, independentemente
+da natureza dinâmica da criação e do encerramento do pod.
+
+Após a recriação do cluster, devemos criar novamente também nosso
+aplicativo de exemplo:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{kubectl}\NormalTok{ apply }\AttributeTok{{-}f}\NormalTok{ https://raw.githubusercontent.com/kubernetes{-}hy/material{-}example/master/app2/manifests/deployment.yaml}
+\end{Highlighting}
+\end{Shaded}
+
+O \texttt{deployment.yaml} tem a seguinte aparência:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{apiVersion}\KeywordTok{:}\AttributeTok{ apps/v1}
+\FunctionTok{kind}\KeywordTok{:}\AttributeTok{ Deployment}
+\FunctionTok{metadata}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ hashresponse{-}dep}
+\FunctionTok{spec}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{replicas}\KeywordTok{:}\AttributeTok{ }\DecValTok{1}
+\AttributeTok{  }\FunctionTok{selector}\KeywordTok{:}
+\AttributeTok{    }\FunctionTok{matchLabels}\KeywordTok{:}
+\AttributeTok{      }\FunctionTok{app}\KeywordTok{:}\AttributeTok{ hashresponse}
+\AttributeTok{  }\FunctionTok{template}\KeywordTok{:}
+\AttributeTok{    }\FunctionTok{metadata}\KeywordTok{:}
+\AttributeTok{      }\FunctionTok{labels}\KeywordTok{:}
+\AttributeTok{        }\FunctionTok{app}\KeywordTok{:}\AttributeTok{ hashresponse}
+\AttributeTok{    }\FunctionTok{spec}\KeywordTok{:}
+\AttributeTok{      }\FunctionTok{containers}\KeywordTok{:}
+\AttributeTok{        }\KeywordTok{{-}}\AttributeTok{ }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ hashresponse}
+\AttributeTok{          }\FunctionTok{image}\KeywordTok{:}\AttributeTok{ jakousa/dwk{-}app2:b7fc18de2376da80ff0cfc72cf581a9f94d10e64}
+\end{Highlighting}
+\end{Shaded}
+
+Vamos agora criar um arquivo \texttt{service.yaml} na pasta
+\texttt{manifests}. Precisamos do serviço para fazer as seguintes
+coisas:
+
+\begin{itemize}
+\tightlist
+\item
+  Declarar que queremos um Serviço
+\item
+  Declarar qual porta ouvir
+\item
+  Declarar o requerimento (seletor) para onde o pedido deverá ser
+  dirigido
+\item
+  Declarar a porta para onde o pedido deve ser dirigido
+\end{itemize}
+
+O arquivo \texttt{service.yaml} resultante é assim:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{apiVersion}\KeywordTok{:}\AttributeTok{ v1}
+\FunctionTok{kind}\KeywordTok{:}\AttributeTok{ Service}
+\FunctionTok{metadata}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ hashresponse{-}svc}
+\FunctionTok{spec}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{type}\KeywordTok{:}\AttributeTok{ NodePort}
+\AttributeTok{  }\FunctionTok{selector}\KeywordTok{:}
+\AttributeTok{    }\FunctionTok{app}\KeywordTok{:}\AttributeTok{ hashresponse}\CommentTok{ \# This is the app as declared in the deployment.}
+\AttributeTok{  }\FunctionTok{ports}\KeywordTok{:}
+\AttributeTok{    }\KeywordTok{{-}}\AttributeTok{ }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ http}
+\AttributeTok{      }\FunctionTok{nodePort}\KeywordTok{:}\AttributeTok{ }\DecValTok{30080}\CommentTok{ \# This is the port that is available outside. Value for nodePort can be between 30000{-}32767}
+\AttributeTok{      }\FunctionTok{protocol}\KeywordTok{:}\AttributeTok{ TCP}
+\AttributeTok{      }\FunctionTok{port}\KeywordTok{:}\AttributeTok{ }\DecValTok{1234}\CommentTok{ \# This is a port that is available to the cluster, in this case it can be \textasciitilde{} anything}
+\AttributeTok{      }\FunctionTok{targetPort}\KeywordTok{:}\AttributeTok{ }\DecValTok{3000}\CommentTok{ \# This is the target port}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ kubectl apply }\AttributeTok{{-}f}\NormalTok{ manifests/service.yaml}
+\ExtensionTok{service/hashresponse{-}svc}\NormalTok{ created}
+\end{Highlighting}
+\end{Shaded}
+
+Como publicamos 8082 como 30080, podemos acessá-lo agora via
+http://localhost:8082 .
+
+Agora definimos um serviço com \texttt{type:\ NodePort}. Portas Node
+(abre em uma nova aba) são simplesmente portas abertas pelo Kubernetes
+para todos os nós, e o serviço manipulará solicitações nessa porta.
+NodePorts não são flexíveis e exigem que você atribua uma porta
+diferente para cada aplicativo. Como tal, os NodePorts não são usados em
+produção, mas são úteis de conhecer.
+
+O que gostaríamos de usar em vez do NodePort seria um serviço do tipo
+LoadBalancer, mas isso ``só'' funciona com provedores de nuvem, pois
+configura um balanceador de carga possivelmente caro para ele.
+Conheceremos esse tipo no Capítulo 4.
+
+Vamos analisar mais uma vez a configuração do aplicativo de exemplo:
+
+\textbf{Implantação (hashresponse-dep)} - Executa 1 réplica do contêiner
+\texttt{jakousa/dwk-app2} - Pod rotulado com \texttt{app:\ hashresponse}
+- O contêiner escuta na porta 3000
+
+\textbf{Serviço (hashresponse-svc)} - Tipo: NodePort --- expõe o
+aplicativo externamente - Seletor: \texttt{app:\ hashresponse} ---
+roteia o tráfego para pods correspondentes - Configuração da porta: -
+\texttt{targetPort:\ 3000} --- a porta em que o contêiner escuta -
+\texttt{port:\ 1234} --- a porta exposta pelo Serviço para acesso
+interno ao cluster - \texttt{nodePort:\ 30080} --- a porta exposta em
+cada nó do cluster para acesso externo
+
+Existem duas maneiras de acessar o aplicativo:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{De dentro do cluster:} \texttt{hashresponse-svc:1234}
+\item
+  \textbf{Da sua máquina local:} \texttt{localhost:8082} (o k3d mapeia a
+  porta do host 8082 → NodePort 30080)
+\end{itemize}
+
+O tráfego flui da seguinte forma quando o aplicativo é acessado a partir
+da sua máquina local:
+
+\begin{verbatim}
+localhost:8082
+  ↓
+k3d load balancer
+  ↓
+node:30080 (NodePort)
+  ↓
+Pod container:3000
+\end{verbatim}
+
+Portanto, o balanceador de carga do k3d permite o acesso ao host local
+durante o desenvolvimento.
+
+\subsubsection{Sobre o roteamento do
+Kubernetes}\label{sobre-o-roteamento-do-kubernetes}
+
+O cluster foi criado da seguinte forma:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{k3d}\NormalTok{ cluster create }\AttributeTok{{-}{-}port}\NormalTok{ 8082:30080@agent:0 }\AttributeTok{{-}p}\NormalTok{ 8081:80@loadbalancer }\AttributeTok{{-}{-}agents}\NormalTok{ 2}
+\end{Highlighting}
+\end{Shaded}
+
+Portanto, o \texttt{localhost:8082} é encaminhado para a porta 30080 do
+agente de nó \texttt{:0} dentro do cluster. E se o aplicativo estiver
+sendo executado em outro nó do cluster? O \texttt{@agent:0} da
+configuração acima determina qual nó recebe o tráfego externo vindo da
+sua máquina host. Depois disso, a rede do serviço Kubernetes assume o
+controle e roteia automaticamente para o local correto do pod.
+
+É por isso que os serviços NodePort são tão poderosos: você não precisa
+saber ou se importar em qual nó o pod está. O serviço lida com todo o
+roteamento internamente.
+
+\begin{quote}
+\textbf{Exercício 1.6 --- O projeto, etapa 4}
+
+\textbf{Instruções:} Use um serviço NodePort para habilitar o acesso ao
+projeto.
+\end{quote}
+
+\subsubsection{O que é um Ingress?}\label{o-que-uxe9-um-ingress}
+
+Há ainda um recurso adicional que nos ajudará a servir o aplicativo: o
+Ingress.
+
+O recurso de acesso à rede de entrada,
+\href{https://kubernetes.io/docs/concepts/services-networking/ingress/}{Ingress}
+, é um tipo de recurso completamente diferente dos Serviços. Se você tem
+o \href{https://en.wikipedia.org/wiki/OSI_model}{modelo OSI} memorizado,
+o Ingress funciona na camada 7, enquanto os serviços funcionam na camada
+4. Você pode vê-los usados juntos: primeiro o LoadBalancer mencionado
+anteriormente e depois o Ingress para lidar com o roteamento. No nosso
+caso, como não temos um balanceador de carga disponível, podemos usar o
+Ingress como primeira parada. Se você está familiarizado com proxies
+reversos como o Nginx, o Ingress deve parecer familiar.
+
+Os Ingress são implementados por vários ``controladores'' diferentes.
+Isso significa que os Ingress não funcionam automaticamente em um
+cluster, mas lhe dão a liberdade de escolher qual controlador Ingress
+funciona melhor para você. O K3s já tem o
+\href{https://traefik.io/traefik}{Traefik} instalado. Outras opções
+incluem Istio e o Nginx Ingress Controller, entre outras, mais
+\href{https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/}{aqui}.
+
+Mudar para o Ingress exigirá que criemos um recurso do tipo Ingress. O
+Ingress roteará o tráfego de entrada para um Serviço, mas o antigo
+Serviço NodePort não fará isso, então o removeremos:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ kubectl delete }\AttributeTok{{-}f}\NormalTok{ manifests/service.yaml}
+\ExtensionTok{service} \StringTok{"hashresponse{-}svc"}\NormalTok{ deleted}
+\end{Highlighting}
+\end{Shaded}
+
+Um recurso de Serviço do tipo
+\href{https://kubernetes.io/docs/concepts/services-networking/service/\#type-clusterip}{ClusterIP}
+fornece ao Serviço um IP interno que estará acessível dentro do cluster.
+
+A seguinte definição de \texttt{service.yaml} permitirá o tráfego TCP da
+porta 2345 para a porta 3000:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{apiVersion}\KeywordTok{:}\AttributeTok{ v1}
+\FunctionTok{kind}\KeywordTok{:}\AttributeTok{ Service}
+\FunctionTok{metadata}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ hashresponse{-}svc}
+\FunctionTok{spec}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{type}\KeywordTok{:}\AttributeTok{ ClusterIP}
+\AttributeTok{  }\FunctionTok{selector}\KeywordTok{:}
+\AttributeTok{    }\FunctionTok{app}\KeywordTok{:}\AttributeTok{ hashresponse}
+\AttributeTok{  }\FunctionTok{ports}\KeywordTok{:}
+\AttributeTok{    }\KeywordTok{{-}}\AttributeTok{ }\FunctionTok{port}\KeywordTok{:}\AttributeTok{ }\DecValTok{2345}
+\AttributeTok{      }\FunctionTok{protocol}\KeywordTok{:}\AttributeTok{ TCP}
+\AttributeTok{      }\FunctionTok{targetPort}\KeywordTok{:}\AttributeTok{ }\DecValTok{3000}
+\end{Highlighting}
+\end{Shaded}
+
+O segundo recurso que precisamos é o novo Ingress, que será definido no
+arquivo \texttt{ingress.yaml}. Ele precisa:
+
+\begin{itemize}
+\tightlist
+\item
+  Declarar que deve ser um Ingress
+\item
+  Encaminhar todo o tráfego para o nosso serviço
+\end{itemize}
+
+A configuração é assim:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{apiVersion}\KeywordTok{:}\AttributeTok{ networking.k8s.io/v1}
+\FunctionTok{kind}\KeywordTok{:}\AttributeTok{ Ingress}
+\FunctionTok{metadata}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ dwk{-}material{-}ingress}
+\FunctionTok{spec}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{rules}\KeywordTok{:}
+\AttributeTok{  }\KeywordTok{{-}}\AttributeTok{ }\FunctionTok{http}\KeywordTok{:}
+\AttributeTok{      }\FunctionTok{paths}\KeywordTok{:}
+\AttributeTok{      }\KeywordTok{{-}}\AttributeTok{ }\FunctionTok{path}\KeywordTok{:}\AttributeTok{ /}
+\AttributeTok{        }\FunctionTok{pathType}\KeywordTok{:}\AttributeTok{ Prefix}
+\AttributeTok{        }\FunctionTok{backend}\KeywordTok{:}
+\AttributeTok{          }\FunctionTok{service}\KeywordTok{:}
+\AttributeTok{            }\FunctionTok{name}\KeywordTok{:}\AttributeTok{ hashresponse{-}svc}
+\AttributeTok{            }\FunctionTok{port}\KeywordTok{:}
+\AttributeTok{              }\FunctionTok{number}\KeywordTok{:}\AttributeTok{ }\DecValTok{2345}
+\end{Highlighting}
+\end{Shaded}
+
+Então podemos aplicar tudo e visualizar o resultado:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{$}\NormalTok{ kubectl apply }\AttributeTok{{-}f}\NormalTok{ manifests}
+\ExtensionTok{ingress.networking.k8s.io/dwk{-}material{-}ingress}\NormalTok{ created}
+\ExtensionTok{service/hashresponse{-}svc}\NormalTok{ configured}
+
+\ExtensionTok{$}\NormalTok{ kubectl get svc,ing}
+\ExtensionTok{NAME}\NormalTok{                       TYPE        CLUSTER{-}IP   EXTERNAL{-}IP   PORT}\ErrorTok{(}\ExtensionTok{S}\KeywordTok{)}    \ExtensionTok{AGE}
+\ExtensionTok{service/kubernetes}\NormalTok{         ClusterIP   10.43.0.1    }\OperatorTok{\textless{}}\NormalTok{none}\OperatorTok{\textgreater{}}\NormalTok{        443/TCP    5m22s}
+\ExtensionTok{service/hashresponse{-}svc}\NormalTok{   ClusterIP   10.43.0.61   }\OperatorTok{\textless{}}\NormalTok{none}\OperatorTok{\textgreater{}}\NormalTok{        2345/TCP   45s}
+
+\ExtensionTok{NAME}\NormalTok{                                             CLASS    HOSTS   ADDRESS                            PORTS   AGE}
+\ExtensionTok{ingress.networking.k8s.io/dwk{-}material{-}ingress}   \OperatorTok{\textless{}}\NormalTok{none}\OperatorTok{\textgreater{}}   \PreprocessorTok{*}\NormalTok{       172.21.0.3,172.21.0.4,172.21.0.5   80      16s}
+\end{Highlighting}
+\end{Shaded}
+
+Podemos ver que o Ingress está escutando na porta 80. Como já abrimos
+essa porta, podemos acessar o aplicativo em http://localhost:8081.
+
+O fluxo de tráfego ao acessar o aplicativo agora é o seguinte:
+
+\begin{verbatim}
+http://localhost:8081/
+  ↓
+[Ingress Controller] (port 8081 mapped from host)
+  ↓
+[Ingress Rules] (path: / → hashresponse-svc:2345)
+  ↓
+[Service] (port 2345 → targetPort 3000)
+  ↓
+[Pod] (container listening on port 3000)
+  ↓
+[Application]
+\end{verbatim}
+
+\begin{quote}
+\textbf{Exercício 1.7 --- Acesso externo com Ingress}
+
+\textbf{Instruções:} O aplicativo ``Log output'' atualmente gera um
+registro de data e hora e uma sequência aleatória (que ele cria na
+inicialização) para os logs.
+
+Adicione um endpoint para solicitar o status atual (timestamp e a string
+aleatória) e um Ingress para que você possa acessá-lo com um navegador.
+
+Você pode simplesmente armazenar a string aleatória na memória.
+\end{quote}
+
+\begin{quote}
+\textbf{Exercício 1.8 --- O projeto, etapa 5}
+
+\textbf{Instruções:} Mude para usar Ingress em vez de NodePort para
+acessar o projeto. Você pode excluir o Ingress do aplicativo ``Log
+output'' para que eles não interfiram neste exercício. Analisaremos mais
+sobre caminhos e roteamento no próximo exercício e, nesse ponto, você
+pode configurar o projeto para ser executado com o aplicativo ``Log
+output'' lado a lado.
+\end{quote}
+
+\begin{quote}
+\textbf{Exercício 1.9 --- Mais serviços}
+
+\textbf{Instruções:} Desenvolva um segundo aplicativo que simplesmente
+responda com ``pong 0'' a uma solicitação GET e aumente um contador (o
+0) para que você possa ver quantas solicitações foram enviadas. O
+contador deve estar na memória para que possa ser reiniciado em algum
+momento. Crie uma nova implantação para ele e faça com que ele
+compartilhe a entrada com o aplicativo ``Log output''. Rotas de
+solicitações direcionadas a \texttt{/pingpong} para ele.
+
+Em exercícios futuros, esta segunda aplicação será chamada de
+``aplicação de pingue-pongue''. Ela será usada com o aplicativo ``Log
+output''.
+
+O aplicativo de pingue-pongue precisará escutar solicitações em
+\texttt{/pingpong}, então talvez você precise fazer alterações em seu
+código. Isso pode ser evitado configurando o Ingress para reescrever o
+caminho, mas isso fica como um exercício opcional. Você pode conferir a
+\href{https://kubernetes.io/docs/concepts/services-networking/ingress/\#the-ingress-resource}{documentação
+de Ingress do Kubernetes}.
+\end{quote}
+
+\subsubsection{API de gateway}\label{api-de-gateway}
+
+No Capítulo 4, encontraremos outra maneira de acessar nosso cluster: a
+API Gateway, que é um conjunto evolutivo de recursos e configurações
+projetados para gerenciar o tráfego de rede dentro dos clusters do
+Kubernetes. O objetivo é fornecer uma maneira mais expressiva e
+extensível de definir como o tráfego deve ser roteado e controlado, em
+comparação com as soluções descritas nesta página.
+
+\end{document}
